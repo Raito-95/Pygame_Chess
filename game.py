@@ -42,7 +42,52 @@ class Game:
                 else:
                     if piece and self.board.get_piece_color(piece) == self.current_player:
                         self.selected_piece = (x, y)
-    
+
+    def show_draw_dialog(self):
+        overlay = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 128))
+
+        font = pygame.font.Font(None, 36)
+
+        text_surface = font.render("Draw!", True, (255, 255, 255))
+
+        text_rect = text_surface.get_rect(
+            center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 40))
+
+        overlay.blit(text_surface, text_rect)
+
+        restart_button = pygame.Rect(
+            SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2, 160, 40)
+        quit_button = pygame.Rect(
+            SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2 + 50, 160, 40)
+
+        pygame.draw.rect(overlay, (255, 255, 255), restart_button)
+        pygame.draw.rect(overlay, (255, 255, 255), quit_button)
+
+        restart_text = font.render("Restart", True, (0, 0, 0))
+        quit_text = font.render("Quit", True, (0, 0, 0))
+
+        overlay.blit(restart_text, restart_text.get_rect(
+            center=restart_button.center))
+        overlay.blit(quit_text, quit_text.get_rect(center=quit_button.center))
+
+        self.screen.blit(overlay, (0, 0))
+        pygame.display.flip()
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        if restart_button.collidepoint(event.pos):
+                            self.board.reset_board()
+                            return
+                        elif quit_button.collidepoint(event.pos):
+                            self.running = False
+                            return
+                elif event.type == pygame.QUIT:
+                    self.running = False
+                    return
+
     def run(self):
         while self.running:
             for event in pygame.event.get():
@@ -54,5 +99,8 @@ class Game:
 
             self.draw_board()
             pygame.display.flip()
+
+            if self.board.is_stalemate():
+                self.show_draw_dialog()
 
         pygame.quit()

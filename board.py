@@ -1,34 +1,38 @@
 import pygame
+import copy
 from piece import Pawn, Rook, Knight, Bishop, Queen, King
 from constants import SCREEN_SIZE, WHITE, GRAY, RED, LIGHT_BLUE, piece_images
 
 
 class Board:
-    def __init__(self):
-        self.board = [[Rook('black', 0, 0), Knight('black', 1, 0), Bishop('black', 2, 0), Queen('black', 3, 0),
-                       King('black', 4, 0), Bishop('black', 5, 0), Knight('black', 6, 0), Rook('black', 7, 0)],
-                      [Pawn('black', x, 1) for x in range(8)],
-                      [None] * 8, [None] * 8, [None] * 8, [None] * 8,
-                      [Pawn('white', x, 6) for x in range(8)],
-                      [Rook('white', 0, 7), Knight('white', 1, 7), Bishop('white', 2, 7), Queen('white', 3, 7),
-                       King('white', 4, 7), Bishop('white', 5, 7), Knight('white', 6, 7), Rook('white', 7, 7)]]
+    def __init__(self, initialize=True):
+        if initialize:
+            self.board = [
+                [Rook('black', 0, 0), Knight('black', 1, 0), Bishop('black', 2, 0), Queen('black', 3, 0),
+                 King('black', 4, 0), Bishop('black', 5, 0), Knight('black', 6, 0), Rook('black', 7, 0)],
+                [Pawn('black', x, 1) for x in range(8)],
+                [None] * 8, [None] * 8, [None] * 8, [None] * 8,
+                [Pawn('white', x, 6) for x in range(8)],
+                [Rook('white', 0, 7), Knight('white', 1, 7), Bishop('white', 2, 7), Queen('white', 3, 7),
+                 King('white', 4, 7), Bishop('white', 5, 7), Knight('white', 6, 7), Rook('white', 7, 7)]
+            ]
+        else:
+            self.board = None
+
         self.selected_piece = None
         self.current_player = 'white'
         self.last_move = None
+        self.move_history = []
+        self.halfmove_counter = 0
+
+    def reset_board(self):
+        self.__init__()
 
     def get_piece(self, x, y):
         return self.board[y][x]
 
     def get_piece_color(self, piece):
         return None if piece is None else piece.color
-
-    def is_square_attacked(self, board, x, y, color):
-        for row in range(8):
-            for col in range(8):
-                piece = board.get_piece(row, col)
-                if piece and piece.color != color and piece.is_valid_move(board, row, col, x, y):
-                    return True
-        return False
 
     def get_possible_moves(self, x, y):
         piece = self.get_piece(x, y)
@@ -38,6 +42,14 @@ class Board:
         moves = [(move_x, move_y) for move_y in range(8) for move_x in range(8)
                  if self.valid_move(x, y, move_x, move_y)]
         return moves
+
+    def find_king(self, color):
+        for y in range(8):
+            for x in range(8):
+                piece = self.board[y][x]
+                if piece is not None and piece.__class__.__name__ == 'King' and piece.color == color:
+                    return x, y
+        return None
 
     def draw(self, screen, selected_piece):
         square_size = SCREEN_SIZE[1] // 8
@@ -77,19 +89,6 @@ class Board:
             SCREEN_SIZE[1], 0, extra_area_width, extra_area_height)
         pygame.draw.rect(screen, (200, 200, 200), extra_area_rect)
 
-    def valid_move(self, from_x, from_y, to_x, to_y):
-        piece = self.board[from_y][from_x]
-        target_piece = self.board[to_y][to_x]
-        piece_color = self.get_piece_color(piece)
-
-        if not piece or piece_color != self.current_player:
-            return False
-
-        if target_piece and piece_color == self.get_piece_color(target_piece):
-            return False
-
-        return piece.is_valid_move(self, from_x, from_y, to_x, to_y)
-
     def select_piece(self, x, y):
         piece = self.board[y][x]
         if not piece:
@@ -101,69 +100,118 @@ class Board:
             return True
         return False
 
-    def move_piece(self, from_x, from_y, to_x, to_y):
-        if self.valid_move(from_x, from_y, to_x, to_y):
-            self.board[to_y][to_x] = self.board[from_y][from_x]
-            self.board[from_y][from_x] = None
-            self.last_move = ((from_x, from_y), (to_x, to_y))
-            self.selected_piece = None
-            self.switch_player()
-
-            return True
-        return False
+    def move_piece(self, from_x, from_y, to_x, to_y, check_validity=True):
+        if check_validity and not self.valid_move(from_x, from_y, to_x, to_y):
+            return False
+        piece = self.board[from_y][from_x]
+        self.board[to_y][to_x] = piece
+        piece.x = to_x
+        piece.y = to_y
+        self.board[from_y][from_x] = None
+        return True
 
     def switch_player(self):
         self.current_player = 'black' if self.current_player == 'white' else 'white'
 
-    def is_checkmate(self):
-        current_player_color = self.current_player
-        king_position = None
+    def is_square_attacked(self, x, y, color):
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(col, row)
+                if piece and piece.color != color and piece.is_valid_move(self, col, row, x, y):
+                    return True
+        return False
 
-        for y, x in [(y, x) for y in range(8) for x in range(8)]:
-            piece = self.get_piece(x, y)
-            if isinstance(piece, King) and piece.color == current_player_color:
-                king_position = (x, y)
+    def is_in_check(self, player_color, board=None):
+        if board is None:
+            board = self
+
+        king_position = None
+        for y, row in enumerate(self.board):
+            for x, piece in enumerate(row):
+                if isinstance(piece, King) and piece.color == player_color:
+                    king_position = (x, y)
+                    break
+            if king_position:
                 break
 
-        if not king_position:
+        if king_position is None:
             return False
 
-        king_moves = self.get_possible_moves(*king_position)
-        if any(not self.is_in_check(*move) for move in king_moves):
+        return self.is_square_attacked(*king_position, player_color)
+
+    def is_in_check_after_move(self, from_x, from_y, to_x, to_y):
+        temp_board = copy.deepcopy(self)
+        temp_board.move_piece(from_x, from_y, to_x, to_y, check_validity=False)
+        king_x, king_y = temp_board.find_king(
+            temp_board.get_piece_color(temp_board.board[to_y][to_x]))
+        king_color = temp_board.get_piece_color(temp_board.board[to_y][to_x])
+        return temp_board.is_square_attacked(king_x, king_y, king_color)
+
+    def valid_move(self, from_x, from_y, to_x, to_y):
+        piece = self.board[from_y][from_x]
+        target_piece = self.board[to_y][to_x]
+        piece_color = self.get_piece_color(piece)
+
+        if not piece or piece_color != self.current_player:
             return False
 
-        for y, x in [(y, x) for y in range(8) for x in range(8)]:
-            piece = self.get_piece(x, y)
-            if piece and piece.color == current_player_color:
-                possible_moves = self.get_possible_moves(x, y)
-                if any(self.valid_move(x, y, *move) and not self.is_in_check_after_move(x, y, *move)
-                       for move in possible_moves):
-                    return False
+        if target_piece and piece_color == self.get_piece_color(target_piece):
+            return False
+
+        if not piece.is_valid_move(self, from_x, from_y, to_x, to_y):
+            return False
+
+        return not self.is_in_check_after_move(from_x, from_y, to_x, to_y)
+
+    def is_checkmate(self):
+        current_player_color = self.current_player
+
+        if not self.is_in_check(current_player_color):
+            return False
+
+        for y, row in enumerate(self.board):
+            for x, piece in enumerate(row):
+                if piece is not None and piece.color == current_player_color:
+                    valid_moves = self.get_possible_moves(x, y)
+                    if any(self.valid_move(x, y, *move) for move in valid_moves):
+                        return False
 
         return True
 
-    def is_in_check(self, x, y, board=None):
-        if board is None:
-            board = self
+    def is_stalemate(self):
+        if len(self.move_history) >= 8:
+            if self.move_history[-1] == self.move_history[-5] and self.move_history[-3] == self.move_history[-7] and \
+                    self.move_history[-2] == self.move_history[-6] and self.move_history[-4] == self.move_history[-8]:
+                return True
+
+        if self.halfmove_counter >= 100:
+            return True
+
+        kings_count = 0
+        pieces_count = 0
+        for row in self.board:
+            for piece in row:
+                if isinstance(piece, King):
+                    kings_count += 1
+                if piece is not None:
+                    pieces_count += 1
+        if kings_count == 2 and pieces_count == 2:
+            return True
+
         current_player_color = self.current_player
-        return self.is_square_attacked(board, x, y, current_player_color)
-
-    def is_in_check_after_move(self, from_x, from_y, to_x, to_y):
-        temp_board = [[piece for piece in row] for row in self.board]
-        temp_board[to_y][to_x] = temp_board[from_y][from_x]
-        temp_board[from_y][from_x] = None
-
-        moved_piece = temp_board[to_y][to_x]
-        if isinstance(moved_piece, King):
-            return self.is_in_check(to_x, to_y, board=temp_board)
-
-        current_player_color = self.current_player
-        king_position = None
-
-        for y, x in [(y, x) for y in range(8) for x in range(8)]:
-            piece = temp_board[y][x]
-            if isinstance(piece, King) and piece.color == current_player_color:
-                king_position = (x, y)
+        current_player_in_check = self.is_in_check(current_player_color)
+        has_valid_moves = False
+        for y, row in enumerate(self.board):
+            for x, piece in enumerate(row):
+                if piece is not None and self.get_piece_color(piece) == current_player_color:
+                    valid_moves = self.get_possible_moves(x, y)
+                    if any(self.valid_move(x, y, *move) for move in valid_moves):
+                        has_valid_moves = True
+                        break
+            if has_valid_moves:
                 break
 
-        return self.is_in_check(*king_position, board=temp_board)
+        if not current_player_in_check and not has_valid_moves:
+            return True
+
+        return False
