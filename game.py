@@ -2,15 +2,15 @@ import pygame
 import pygame.mixer as mixer
 from board import Board
 from constants import SCREEN_SIZE
-
+from piece import Pawn
 
 class Game:
     def __init__(self, screen):
         self.screen = screen
-        self.board = Board()
         self.selected_piece = None
         self.current_player = 'white'
         self.running = True
+        self.board = Board()
 
     def change_music(self, music_file):
         mixer.music.stop()
@@ -28,7 +28,6 @@ class Game:
     def handle_click(self, pos):
         x, y = self.screen_to_board_coords(*pos)
         if x < 0 or x >= 8 or y < 0 or y >= 8:
-            # Click is outside the board, do nothing
             return
         piece = self.board.board[y][x]
         if piece and not self.selected_piece and self.board.get_piece_color(piece) == self.current_player:
@@ -38,15 +37,13 @@ class Game:
                 self.selected_piece = None
             else:
                 if self.board.valid_move(self.selected_piece[0], self.selected_piece[1], x, y):
-                    if self.board.get_piece(x, y) == 'pawn' and ((self.board.get_piece_color(x, y) == 'white' and y == 0) or (self.board.get_piece_color(x, y) == 'black' and y == 7)):
-                        self.show_promotion_dialog(x, y)
-                    else:
-                        self.board.move_piece(self.selected_piece[0], self.selected_piece[1], x, y)
-                        self.selected_piece = None
-                        self.current_player = 'black' if self.current_player == 'white' else 'white'
+                    self.board.move_piece(self.selected_piece[0], self.selected_piece[1], x, y)
+                    self.board.switch_player()
+                    self.current_player = 'black' if self.current_player == 'white' else 'white'
                 else:
                     if piece and self.board.get_piece_color(piece) == self.current_player:
                         self.selected_piece = (x, y)
+
 
     def render_text(self, text, size, color):
         font = pygame.font.Font(None, size)
@@ -162,15 +159,23 @@ class Game:
                     if event.button == 1:
                         self.handle_click(event.pos)
 
-            # if self.board.is_stalemate():
-            #     self.show_dialog("Draw!")
-            # elif self.board.is_checkmate():
-            #     if self.current_player == 'white':
-            #         self.show_dialog("Black Wins!")
-            #     else:
-            #         self.show_dialog("White Wins!")
+            if self.board.is_stalemate():
+                self.show_dialog("Draw!")
+            elif self.board.is_checkmate():
+                if self.current_player == 'white':
+                    self.show_dialog("Black Wins!")
+                else:
+                    self.show_dialog("White Wins!")
+
+            # 檢查升變條件
+            for y in range(8):
+                for x in range(8):
+                    piece = self.board.board[y][x]
+                    if isinstance(piece, Pawn) and ((self.board.get_piece_color(piece) == 'white' and y == 0) or (self.board.get_piece_color(piece) == 'black' and y == 7)):
+                        self.show_promotion_dialog(x, y)
 
             self.draw_board()
             pygame.display.flip()
+
 
         pygame.quit()
