@@ -11,6 +11,19 @@ class Game:
         self.current_player = 'white'
         self.running = True
         self.board = Board()
+        self.fonts = {}
+        self.overlay = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
+        self.clock = pygame.time.Clock()
+
+    def get_font(self, size):
+        if size not in self.fonts:
+            self.fonts[size] = pygame.font.Font(None, size)
+        return self.fonts[size]
+
+    def draw_button(self, overlay, rect, text, text_color, bg_color):
+        pygame.draw.rect(overlay, bg_color, rect)
+        label = self.render_text(text, 36, text_color)
+        overlay.blit(label, label.get_rect(center=rect.center))
 
     def change_music(self, music_file):
         mixer.music.stop()
@@ -46,31 +59,24 @@ class Game:
 
 
     def render_text(self, text, size, color):
-        font = pygame.font.Font(None, size)
+        # Get the appropriate font for the given size
+        font = self.get_font(size)
         text_surface = font.render(text, True, color)
         return text_surface
 
-    def show_dialog(self, message):
+    def show_dialog(self, message, options):
         overlay = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 128))
 
         text_surface = self.render_text(message, 36, (255, 255, 255))
-
         text_rect = text_surface.get_rect(center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 40))
-
         overlay.blit(text_surface, text_rect)
 
-        restart_button = pygame.Rect(SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2, 160, 40)
-        quit_button = pygame.Rect(SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2 + 50, 160, 40)
-
-        pygame.draw.rect(overlay, (255, 255, 255), restart_button)
-        pygame.draw.rect(overlay, (255, 255, 255), quit_button)
-
-        restart_text = self.render_text("Restart", 36, (0, 0, 0))
-        quit_text = self.render_text("Quit", 36, (0, 0, 0))
-
-        overlay.blit(restart_text, restart_text.get_rect(center=restart_button.center))
-        overlay.blit(quit_text, quit_text.get_rect(center=quit_button.center))
+        button_colors = (255, 255, 255)
+        for idx, (label, action) in enumerate(options):
+            button_rect = pygame.Rect(SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2 + 50 * idx, 160, 40)
+            self.draw_button(overlay, button_rect, label, (0, 0, 0), button_colors)
+            action['rect'] = button_rect
 
         self.screen.blit(overlay, (0, 0))
         pygame.display.flip()
@@ -79,76 +85,58 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        if restart_button.collidepoint(event.pos):
-                            self.board.reset_board()
-                            return True
-                        elif quit_button.collidepoint(event.pos):
-                            self.running = False
-                            return False
+                        for option in options:
+                            if option['rect'].collidepoint(event.pos):
+                                return option['action']
                 elif event.type == pygame.QUIT:
                     self.running = False
-                    return False
-
-    def end_game(self, message):
-        restart = self.show_dialog(message)
-        if restart:
-            self.board.reset_board()
-            self.current_player = 'white'
+                    return None
 
     def show_promotion_dialog(self, x, y):
-        overlay = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 128))
+        self.overlay.fill((0, 0, 0, 128))
 
-        font = pygame.font.Font(None, 36)
+        options = [
+            {"label": "Rook", "action": "rook"},
+            {"label": "Knight", "action": "knight"},
+            {"label": "Bishop", "action": "bishop"},
+            {"label": "Queen", "action": "queen"},
+        ]
 
-        text_surface = font.render("Promote pawn to:", True, (255, 255, 255))
+        spacing = 50
+        start_x = SCREEN_SIZE[1] + (SCREEN_SIZE[0] - SCREEN_SIZE[1]) // 2 - 80
+        start_y = 100
 
-        text_rect = text_surface.get_rect(center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 80))
+        for idx, option in enumerate(options):
+            button_rect = pygame.Rect(start_x, start_y + spacing * idx, 160, 40)
+            self.draw_button(self.overlay, button_rect, option['label'], (0, 0, 0), (255, 255, 255))
+            option['rect'] = button_rect
 
-        overlay.blit(text_surface, text_rect)
-
-        queen_button = pygame.Rect(SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2, 160, 40)
-        rook_button = pygame.Rect(SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2 + 50, 160, 40)
-        bishop_button = pygame.Rect(SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2 + 100, 160, 40)
-        knight_button = pygame.Rect(SCREEN_SIZE[0] // 2 - 80, SCREEN_SIZE[1] // 2 + 150, 160, 40)
-
-        pygame.draw.rect(overlay, (255, 255, 255), queen_button)
-        pygame.draw.rect(overlay, (255, 255, 255), rook_button)
-        pygame.draw.rect(overlay, (255, 255, 255), bishop_button)
-        pygame.draw.rect(overlay, (255, 255, 255), knight_button)
-
-        queen_text = font.render("Queen", True, (0, 0, 0))
-        rook_text = font.render("Rook", True, (0, 0, 0))
-        bishop_text = font.render("Bishop", True, (0, 0, 0))
-        knight_text = font.render("Knight", True, (0, 0, 0))
-
-        overlay.blit(queen_text, queen_text.get_rect(center=queen_button.center))
-        overlay.blit(rook_text, rook_text.get_rect(center=rook_button.center))
-        overlay.blit(bishop_text, bishop_text.get_rect(center=bishop_button.center))
-        overlay.blit(knight_text, knight_text.get_rect(center=knight_button.center))
-
-        self.screen.blit(overlay, (0, 0))
+        self.screen.blit(self.overlay, (0, 0))
         pygame.display.flip()
 
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        if queen_button.collidepoint(event.pos):
-                            self.board.promote_pawn(x, y, 'queen')
-                            return
-                        elif rook_button.collidepoint(event.pos):
-                            self.board.promote_pawn(x, y, 'rook')
-                            return
-                        elif bishop_button.collidepoint(event.pos):
-                            self.board.promote_pawn(x, y, 'bishop')
-                            return
-                        elif knight_button.collidepoint(event.pos):
-                            self.board.promote_pawn(x, y, 'knight')
-                            return
+                        for option in options:
+                            if option['rect'].collidepoint(*event.pos):
+                                self.board.promote_pawn(x, y, option['action'])
+                                return
                 elif event.type == pygame.QUIT:
                     self.running = False
                     return
+    def end_game(self, message):
+        options = [
+            {"label": "Restart", "action": "restart"},
+            {"label": "Quit", "action": "quit"},
+        ]
+
+        action = self.show_dialog(message, options)
+        if action == 'restart':
+            self.board.reset_board()
+            self.current_player = 'white'
+        elif action == 'quit':
+            self.running = False
 
     def run(self):
         while self.running:
@@ -160,22 +148,30 @@ class Game:
                         self.handle_click(event.pos)
 
             if self.board.is_stalemate():
-                self.show_dialog("Draw!")
+                options = [
+                    {"label": "Restart", "action": "restart"},
+                    {"label": "Quit", "action": "quit"},
+                ]
+                self.show_dialog("Draw!", options)
             elif self.board.is_checkmate():
+                options = [
+                    {"label": "Restart", "action": "restart"},
+                    {"label": "Quit", "action": "quit"},
+                ]
                 if self.current_player == 'white':
-                    self.show_dialog("Black Wins!")
+                    self.show_dialog("Black Wins!", options)
                 else:
-                    self.show_dialog("White Wins!")
+                    self.show_dialog("White Wins!", options)
 
-            # 檢查升變條件
             for y in range(8):
                 for x in range(8):
                     piece = self.board.board[y][x]
-                    if isinstance(piece, Pawn) and ((self.board.get_piece_color(piece) == 'white' and y == 0) or (self.board.get_piece_color(piece) == 'black' and y == 7)):
+                    if isinstance(piece, Pawn) and ((self.board.get_piece_color(piece) == 'white' and y == 0) or
+                                                    (self.board.get_piece_color(piece) == 'black' and y == 7)):
                         self.show_promotion_dialog(x, y)
 
             self.draw_board()
             pygame.display.flip()
-
+            self.clock.tick(30)  # limits the frame rate to 30 FPS
 
         pygame.quit()

@@ -9,18 +9,18 @@ LIGHT_BLUE = (181, 255, 255)
 
 piece_images = {}
 pieces = {
-    'white_pawn': ('white', 'pawn'),
-    'white_rook': ('white', 'rook'),
+    'white_pawn':   ('white', 'pawn'),
+    'white_rook':   ('white', 'rook'),
     'white_knight': ('white', 'knight'),
     'white_bishop': ('white', 'bishop'),
-    'white_queen': ('white', 'queen'),
-    'white_king': ('white', 'king'),
-    'black_pawn': ('black', 'pawn'),
-    'black_rook': ('black', 'rook'),
+    'white_queen':  ('white', 'queen'),
+    'white_king':   ('white', 'king'),
+    'black_pawn':   ('black', 'pawn'),
+    'black_rook':   ('black', 'rook'),
     'black_knight': ('black', 'knight'),
     'black_bishop': ('black', 'bishop'),
-    'black_queen': ('black', 'queen'),
-    'black_king': ('black', 'king')
+    'black_queen':  ('black', 'queen'),
+    'black_king':   ('black', 'king')
 }
 
 for key, (color, name) in pieces.items():
