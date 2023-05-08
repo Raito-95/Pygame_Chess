@@ -1,11 +1,15 @@
 import pygame
-import copy
 from piece import Pawn, Rook, Knight, Bishop, Queen, King
 from constants import SCREEN_SIZE, WHITE, GRAY, RED, LIGHT_BLUE, piece_images
-
+from player import Player
 
 class Board:
     def __init__(self, initialize=True):
+        self.players = {
+            'white': Player('white'),
+            'black': Player('black')
+        }
+        self.player_turn = self.players['white']
         if initialize:
             self.board = [
                 [Rook('black', 0, 0), Knight('black', 1, 0), Bishop('black', 2, 0), Queen('black', 3, 0),
@@ -20,8 +24,6 @@ class Board:
             self.board = None
 
         self.selected_piece = None
-        self.current_player = 'white'
-        self.last_move = None
         self.move_history = []
         self.half_move_counter = 0
 
@@ -43,12 +45,20 @@ class Board:
                  if self.valid_move(x, y, move_x, move_y)]
         return moves
 
+    def get_pawn_to_promote(self):
+        for y, row in enumerate(self.board):
+            if y == 0 or y == 7:
+                for x, piece in enumerate(row):
+                    if isinstance(piece, Pawn):
+                        return x, y
+        return None, None
+
     def valid_move(self, from_x, from_y, to_x, to_y):
         piece = self.board[from_y][from_x]
         target_piece = self.board[to_y][to_x]
         piece_color = self.get_piece_color(piece)
 
-        if not piece or piece_color != self.current_player:
+        if not piece or piece_color != self.player_turn.color:
             return False
 
         if target_piece and piece_color == self.get_piece_color(target_piece):
@@ -61,34 +71,23 @@ class Board:
 
     def promote_pawn(self, x, y, piece_type):
         color = self.get_piece_color(self.board[y][x])
-        self.board[y][x] = Board.create_piece(self, color, piece_type, x, y)
+        self.board[y][x] = self.create_piece(self, color, piece_type, x, y)
 
     def create_piece(self, color, piece_type, x, y):
-        piece_symbol = piece_type.upper() if color == 'white' else piece_type.lower()
-
-        if piece_symbol == 'queen':
+        if piece_type == 'queen':
             return Queen(color, x, y)
-        elif piece_symbol == 'rook':
+        elif piece_type == 'rook':
             return Rook(color, x, y)
-        elif piece_symbol == 'bishop':
+        elif piece_type == 'bishop':
             return Bishop(color, x, y)
-        elif piece_symbol == 'knight':
+        elif piece_type == 'knight':
             return Knight(color, x, y)
-
-    def find_king(self, color):
-        for y in range(8):
-            for x in range(8):
-                piece = self.board[y][x]
-                if piece and piece.__class__.__name__ == 'king' and piece.color == color:
-                    return x, y
-        return None, None
 
     def draw(self, screen, selected_piece):
         square_size = SCREEN_SIZE[1] // 8
 
         for y, x in [(y, x) for y in range(8) for x in range(8)]:
-            rect = pygame.Rect(x * square_size, y *
-                               square_size, square_size, square_size)
+            rect = pygame.Rect(x * square_size, y * square_size, square_size, square_size)
             pygame.draw.rect(screen, WHITE if (x + y) % 2 == 0 else GRAY, rect)
 
             piece = self.board[y][x]
@@ -104,46 +103,46 @@ class Board:
         if selected_piece:
             possible_moves = self.get_possible_moves(*selected_piece)
             for move_x, move_y in possible_moves:
-                highlight_surface = pygame.Surface(
-                    (square_size, square_size), pygame.SRCALPHA)
+                highlight_surface = pygame.Surface((square_size, square_size), pygame.SRCALPHA)
                 highlight_surface.fill((0, 0, 0, 0))
-                pygame.draw.rect(highlight_surface, LIGHT_BLUE +
-                                 (100,), (0, 0, square_size, square_size), 0)
-                screen.blit(highlight_surface, (move_x *
-                                                square_size, move_y * square_size))
+                pygame.draw.rect(highlight_surface, LIGHT_BLUE + (100,), (0, 0, square_size, square_size), 0)
+                screen.blit(highlight_surface, (move_x * square_size, move_y * square_size))
 
         pygame.display.update()
 
     def draw_extra_area(self, screen):
         extra_area_width = SCREEN_SIZE[0] - SCREEN_SIZE[1]
         extra_area_height = SCREEN_SIZE[1]
-        extra_area_rect = pygame.Rect(
-            SCREEN_SIZE[1], 0, extra_area_width, extra_area_height)
-        pygame.draw.rect(screen, (200, 200, 200), extra_area_rect)
+        extra_area_rect = pygame.Rect(SCREEN_SIZE[1], 0, extra_area_width, extra_area_height)
+        pygame.draw.rect(screen, (240, 240, 240), extra_area_rect)
 
     def select_piece(self, x, y):
         piece = self.board[y][x]
+        piece_color = self.get_piece_color(piece)
         if not piece:
             return False
 
-        piece_color = self.get_piece_color(piece)
-        if piece_color == self.current_player:
+        if piece_color == self.player_turn.color:
             self.selected_piece = (x, y)
             return True
+        
         return False
 
-    def move_piece(self, from_x, from_y, to_x, to_y, check_validity=True):
-        if check_validity and not self.valid_move(from_x, from_y, to_x, to_y):
+    def move_piece(self, from_x, from_y, to_x, to_y):
+        if not self.valid_move(from_x, from_y, to_x, to_y):
             return False
         piece = self.board[from_y][from_x]
         self.board[to_y][to_x] = piece
         piece.x = to_x
         piece.y = to_y
         self.board[from_y][from_x] = None
+
+        self.player_turn.add_move((from_x, from_y, to_x, to_y))
+
         return True
 
     def switch_player(self):
-        self.current_player = 'black' if self.current_player == 'white' else 'white'
+        self.player_turn = self.players['black'] if self.player_turn == self.players['white'] else self.players['white']
 
     def is_square_attacked(self, x, y, color):
         for row in range(8):
@@ -172,7 +171,7 @@ class Board:
         return self.is_square_attacked(*king_position, player_color)
 
     def is_checkmate(self):
-        current_player_color = self.current_player
+        current_player_color = self.player_turn.color
 
         if not self.is_in_check(current_player_color):
             return False
@@ -206,7 +205,7 @@ class Board:
         if kings_count == 2 and pieces_count == 2:
             return True
 
-        current_player_color = self.current_player
+        current_player_color = self.player_turn.color
         current_player_in_check = self.is_in_check(current_player_color)
         has_valid_moves = False
         for y, row in enumerate(self.board):

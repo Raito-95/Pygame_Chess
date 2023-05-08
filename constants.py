@@ -7,6 +7,11 @@ GRAY = (128, 128, 128)
 RED = (255, 0, 0)
 LIGHT_BLUE = (181, 255, 255)
 
+BUTTON_WIDTH_RATIO = 0.15
+BUTTON_HEIGHT_RATIO = 0.0625
+BUTTON_SPACING_RATIO = 0.1
+FONTS_SIZE = int(SCREEN_SIZE[1] * 0.05)
+
 piece_images = {}
 pieces = {
     'white_pawn':   ('white', 'pawn'),
