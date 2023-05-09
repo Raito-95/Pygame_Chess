@@ -24,6 +24,7 @@ class Board:
             self.board = None
 
         self.selected_piece = None
+        self.last_move = None
         self.move_history = []
         self.half_move_counter = 0
 
@@ -89,7 +90,7 @@ class Board:
         for y, x in [(y, x) for y in range(8) for x in range(8)]:
             rect = pygame.Rect(x * square_size, y * square_size, square_size, square_size)
             pygame.draw.rect(screen, WHITE if (x + y) % 2 == 0 else GRAY, rect)
-
+            
             piece = self.board[y][x]
             if piece:
                 piece_image = piece_images[f"{piece.color}_{piece.piece_type}"]
@@ -110,6 +111,11 @@ class Board:
 
         pygame.display.update()
 
+    def update_game_state(self):
+        # Update the game state after every move
+        # Check for checkmate, stalemate, or other special conditions
+        pass
+
     def draw_extra_area(self, screen):
         extra_area_width = SCREEN_SIZE[0] - SCREEN_SIZE[1]
         extra_area_height = SCREEN_SIZE[1]
@@ -129,17 +135,46 @@ class Board:
         return False
 
     def move_piece(self, from_x, from_y, to_x, to_y):
-        if not self.valid_move(from_x, from_y, to_x, to_y):
+        piece = self.get_piece(from_x, from_y)
+        target_piece = self.get_piece(to_x, to_y)
+
+        if piece and piece.is_valid_move(self, from_x, from_y, to_x, to_y):
+            # Move the piece to the destination square
+            self.board[to_y][to_x] = piece
+            self.board[from_y][from_x] = None
+            piece.move(to_x, to_y)
+
+            # Update the last_move attribute
+            self.last_move = ((from_x, from_y), (to_x, to_y))
+
+            # Capture the piece if it exists on the destination square
+            if target_piece is not None:
+                if target_piece.color == 'white':
+                    self.players['black'].capture_piece(target_piece)
+                else:
+                    self.players['white'].capture_piece(target_piece)
+
+            # Check for castling
+            if isinstance(piece, King) and abs(to_x - from_x) == 2:
+                # Determine the rook's initial and final positions
+                rook_from_x = 0 if to_x > from_x else 7
+                rook_to_x = (from_x + to_x) // 2
+
+                # Move the rook
+                rook = self.get_piece(rook_from_x, from_y)
+                self.board[rook_to_x][from_y] = rook
+                self.board[rook_from_x][from_y] = None
+                rook.move(rook_to_x, from_y)
+
+            # Check for en passant capture
+            if isinstance(piece, Pawn) and abs(from_y - to_y) == 1 and abs(from_x - to_x) == 1:
+                if piece.is_valid_move(self, from_x, from_y, to_x, to_y) and isinstance(self.get_piece(to_x, from_y), Pawn):
+                    piece.en_passant_capture(self, from_x, from_y, to_x, to_y)
+
+            return True
+        else:
             return False
-        piece = self.board[from_y][from_x]
-        self.board[to_y][to_x] = piece
-        piece.x = to_x
-        piece.y = to_y
-        self.board[from_y][from_x] = None
 
-        self.player_turn.add_move((from_x, from_y, to_x, to_y))
-
-        return True
 
     def switch_player(self):
         self.player_turn = self.players['black'] if self.player_turn == self.players['white'] else self.players['white']

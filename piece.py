@@ -5,6 +5,10 @@ class Piece():
         self.x = x
         self.y = y
 
+    def move(self, to_x, to_y):
+        self.x = to_x
+        self.y = to_y
+
 
 class Pawn(Piece):
     def __init__(self, color, x, y):
@@ -32,6 +36,17 @@ class Pawn(Piece):
                 return True
 
         return False
+    
+    def en_passant_capture(self, board, from_x, from_y, to_x, to_y):
+        piece_color = self.color
+        direction = -1 if piece_color == 'white' else 1
+        captured_pawn_x = to_x
+        captured_pawn_y = from_y
+
+        captured_pawn = board.get_piece(captured_pawn_x, captured_pawn_y)
+        if captured_pawn is not None and captured_pawn.color != piece_color and isinstance(captured_pawn, Pawn):
+            board.board[captured_pawn_y][captured_pawn_x] = None
+
 
 
 class Rook(Piece):

@@ -71,3 +71,14 @@ class Dialog:
         action = self.show_message("Select a piece to promote to:", options)
         if action:
             board.promote_pawn(x, y, action)
+
+    def show_draw_offer_dialog(self):
+        prompt = "Your opponent has offered a draw. Do you accept?"
+        options = [
+            {"label": "Accept", "action": "accept"},
+            {"label": "Decline", "action": "decline"},
+        ]
+
+        choice = self.show_message(prompt, options)
+
+        return choice == "accept"
