@@ -1,7 +1,7 @@
 import pygame
 import pygame.mixer as mixer
 from board import Board
-from constants import SCREEN_SIZE
+from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, FONTS_SIZE
 from dialog import Dialog
 from player import Player
 
@@ -39,24 +39,26 @@ class Game:
         # Draw the draw button
         button_color = (200, 200, 200)
         text_color = (0, 0, 0)
-        button_width, button_height = 120, 50
-        button_x, button_y = SCREEN_SIZE[0] - 20 - button_width, 20
+        button_width, button_height = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO, SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
+        button_x, button_y = SCREEN_SIZE[1] + ((SCREEN_SIZE[0] - SCREEN_SIZE[1]) / 2) - (button_width / 2), SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO * 7
         button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
         pygame.draw.rect(self.screen, button_color, button_rect)
 
         # Draw the draw button text
-        font = pygame.font.Font(None, 36)
+        font = pygame.font.Font(None, FONTS_SIZE)
         text = font.render('Offer Draw', True, text_color)
         text_rect = text.get_rect(center=button_rect.center)
         self.screen.blit(text, text_rect)
 
     # Handling Input
     def handle_click(self, pos):
-        button_x, button_y, button_width, button_height = SCREEN_SIZE[0] - 20 - 120, 20, 120, 50
+        button_width = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO
+        button_height = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
+        button_x = SCREEN_SIZE[1] + ((SCREEN_SIZE[0] - SCREEN_SIZE[1]) / 2) - (button_width / 2)
+        button_y = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO * 7
         button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
 
         if button_rect.collidepoint(pos):
-            # Handle the draw button click
             draw_accepted = self.dialog.show_draw_offer_dialog()
             if draw_accepted:
                 self.dialog.show_message("Draw!")
