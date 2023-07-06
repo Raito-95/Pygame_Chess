@@ -1,88 +1,61 @@
 import pygame
 import pygame.mixer as mixer
 from board import Board
-from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, FONTS_SIZE
+from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, FONTS_SIZE, WHITE, GRAY
 from dialog import Dialog
 from player import Player
 
 
 class Game:
     def __init__(self, screen):
-        # Pygame-related attributes
         self.screen = screen
         self.overlay = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
 
-        # Game state attributes
         self.running = True
         self.players = [Player('white'), Player('black')]
         self.current_player_index = 0
 
-        # Game objects and data structures
         self.board = Board()
-        self.dialog = Dialog(self.screen)  # Initialize the dialog object
+        self.dialog = Dialog(self.screen)
+
+        self.button_width = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO
+        self.button_height = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
+        self.button_x = SCREEN_SIZE[1] + ((SCREEN_SIZE[0] - SCREEN_SIZE[1]) // 2) - (self.button_width // 2)
+        self.button_y = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO * 7
+        self.button_rect = pygame.Rect(self.button_x, self.button_y, self.button_width, self.button_height)
 
     @property
     def current_player(self):
         return self.players[self.current_player_index]
 
-    # Utility Functions
     def screen_to_board_coords(self, screen_x, screen_y):
         square_size = SCREEN_SIZE[1] // 8
         return screen_x // square_size, screen_y // square_size
 
-    # Drawing Functions
     def draw_board(self):
         self.board.draw(self.screen)
         self.board.draw_extra_area(self.screen)
         
-        # Draw the draw button
-        button_color = (200, 200, 200)
-        text_color = (0, 0, 0)
-        button_width, button_height = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO, SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
-        button_x, button_y = SCREEN_SIZE[1] + ((SCREEN_SIZE[0] - SCREEN_SIZE[1]) / 2) - (button_width / 2), SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO * 7
-        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
-        pygame.draw.rect(self.screen, button_color, button_rect)
+        pygame.draw.rect(self.screen, GRAY, self.button_rect)
 
-        # Draw the draw button text
-        font = pygame.font.Font(None, FONTS_SIZE)
-        text = font.render('Offer Draw', True, text_color)
-        text_rect = text.get_rect(center=button_rect.center)
-        self.screen.blit(text, text_rect)
-
-    # Handling Input
     def handle_click(self, pos):
-        button_width = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO
-        button_height = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
-        button_x = SCREEN_SIZE[1] + ((SCREEN_SIZE[0] - SCREEN_SIZE[1]) / 2) - (button_width / 2)
-        button_y = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO * 7
-        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
-
-        if button_rect.collidepoint(pos):
-            draw_accepted = self.dialog.show_draw_offer_dialog()
-            if draw_accepted:
-                self.dialog.show_message("Draw!")
-                self.running = False
+        x, y = self.screen_to_board_coords(*pos)
+        if x < 0 or x >= 8 or y < 0 or y >= 8:
+            return
+        piece = self.board.board[y][x]
+        if not self.board.selected_piece:
+            if piece and self.board.get_piece_color(piece) == self.current_player:
+                self.board.select_piece(x, y, self.current_player)
+        elif (x, y) == self.board.selected_piece:
+            self.board.selected_piece = None
         else:
-            x, y = self.screen_to_board_coords(*pos)
-            if x < 0 or x >= 8 or y < 0 or y >= 8:
-                return
-            piece = self.board.board[y][x]
-            if piece and not self.board.selected_piece and self.board.get_piece_color(piece) == self.current_player.color:
-                self.board.select_piece(x, y)
-            elif self.board.selected_piece:
-                if (x, y) == self.board.selected_piece:
-                    self.board.selected_piece = None
-                else:
-                    if self.board.valid_move(self.board.selected_piece[0], self.board.selected_piece[1], x, y):
-                        self.board.move_piece(self.board.selected_piece[0], self.board.selected_piece[1], x, y)
-                        self.board.switch_player()
-                        self.current_player_index = 1 - self.current_player_index
-                    else:
-                        if piece and self.board.get_piece_color(piece) == self.current_player.color:
-                            self.board.select_piece(x, y)
+            if self.board.valid_move(self.board.selected_piece[0], self.board.selected_piece[1], x, y, self.current_player):
+                self.board.move_piece(self.board.selected_piece[0], self.board.selected_piece[1], x, y)
+                self.current_player_index = 1 - self.current_player_index
+            elif piece and self.board.get_piece_color(piece) == self.current_player:
+                self.board.select_piece(x, y, self.current_player)
 
-    # Game Loop Functions
     def run(self):
         while self.running:
             for event in pygame.event.get():
@@ -92,20 +65,19 @@ class Game:
                     if event.button == 1:
                         self.handle_click(event.pos)
 
-            if self.board.is_stalemate():
+            if self.board.stalemate(self.current_player):
                 self.dialog.show_message("Draw!")
-            elif self.board.is_checkmate():
+            elif self.board.checkmate(self.current_player):
                 if self.current_player.color == 'white':
                     self.dialog.show_message("Black Wins!")
                 else:
                     self.dialog.show_message("White Wins!")
 
-            pawn_to_promote = self.board.get_pawn_to_promote()
+            pawn_to_promote = self.board.pawn_to_promote()
             if pawn_to_promote:
                 x, y = pawn_to_promote
-                self.dialog.show_promotion_dialog(x, y, self.board)
+                self.dialog.show_promotion(x, y, self.board)
 
-            self.board.update_game_state()
             self.draw_board()
             pygame.display.flip()
             self.clock.tick(30)
