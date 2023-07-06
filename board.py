@@ -4,7 +4,7 @@ from constants import SCREEN_SIZE, WHITE, GRAY, RED, LIGHT_BLUE, piece_images
 from player import Player
 
 class Board:
-    def __init__(self, initialize=True):
+    def __init__(self, current_player, initialize=True):
         self.players = {
             'white': Player('white'),
             'black': Player('black')
@@ -22,6 +22,7 @@ class Board:
         else:
             self.board = None
 
+        self.current_player = current_player
         self.selected_piece = None
         self.last_move = None
         self.move_history = []
@@ -30,14 +31,8 @@ class Board:
     def reset_board(self):
         self.__init__()
 
-    def get_piece(self, x, y):
-        return self.board[y][x]
-
-    def get_piece_color(self, piece):
-        return None if piece is None else piece.color
-
-    def get_possible_moves(self, x, y):
-        piece = self.get_piece(x, y)
+    def possible_moves(self, x, y):
+        piece = self.board[y][x]
         if not piece:
             return []
 
@@ -45,26 +40,13 @@ class Board:
                  if self.valid_move(x, y, move_x, move_y)]
         return moves
 
-    def valid_move(self, from_x, from_y, to_x, to_y, current_player):
+    def move_piece(self, from_x, from_y, to_x, to_y):
         piece = self.board[from_y][from_x]
         target_piece = self.board[to_y][to_x]
-        piece_color = self.get_piece_color(piece)
 
-        if not piece or piece_color != current_player:
-            return False
-
-        if target_piece and piece_color == current_player:
-            return False
-
-        return piece.move(self, from_x, from_y, to_x, to_y)
-
-    def move_piece(self, from_x, from_y, to_x, to_y):
-        piece = self.get_piece(from_x, from_y)
-
-        if piece and piece.move(self, from_x, from_y, to_x, to_y):
+        if piece.move(self, from_x, from_y, to_x, to_y):
             self.board[to_y][to_x] = piece
             self.board[from_y][from_x] = None
-            piece.move(to_x, to_y)
 
             self.last_move = ((from_x, from_y), (to_x, to_y))
 
@@ -72,13 +54,11 @@ class Board:
                 rook_from_x = 0 if to_x > from_x else 7
                 rook_to_x = (from_x + to_x) // 2
 
-                rook = self.get_piece(rook_from_x, from_y)
+                rook = self.board[rook_from_x][from_y]
                 self.board[rook_to_x][from_y] = rook
                 self.board[rook_from_x][from_y] = None
-                rook.move(rook_to_x, from_y)
 
             if isinstance(piece, Pawn) and abs(from_y - to_y) == 1 and abs(from_x - to_x) == 1:
-                target_piece = self.get_piece(to_x, from_y)
                 if isinstance(target_piece, Pawn):
                     self.board[to_x][from_y] = None
             return True
@@ -140,11 +120,10 @@ class Board:
         extra_area_rect = pygame.Rect(SCREEN_SIZE[1], 0, extra_area_width, extra_area_height)
         pygame.draw.rect(screen, (240, 240, 240), extra_area_rect)
 
-    def select_piece(self, x, y, current_player):
+    def select_piece(self, x, y):
         piece = self.board[y][x]
-        piece_color = self.get_piece_color(piece)
 
-        if piece_color == current_player:
+        if piece.color == self.current_player:
             self.selected_piece = (x, y)
             return True
         
