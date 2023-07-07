@@ -21,8 +21,8 @@ class Dialog:
                 self.start_x, self.start_y + self.button_spacing * idx, self.button_width, self.button_height)
             pygame.draw.rect(self.overlay, GRAY, button_rect)
 
-            text_surface = self.dialog_font.render(option['label'], True, BLACK)
-            text_rect = text_surface.get_rect(center=button_rect.center)
+            # text_surface = self.dialog_font.render(option['label'], True, BLACK)
+            # text_rect = text_surface.get_rect(center=button_rect.center)
             # self.overlay.blit(text_surface, text_rect)
 
             option['rect'] = button_rect
