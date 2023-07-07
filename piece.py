@@ -58,7 +58,7 @@ class Rook(Piece):
         elif from_y == to_y and from_x != to_x:
             direction_x = 1 if to_x > from_x else -1
             for x in range(from_x + direction_x, to_x, direction_x):
-                if board.get_piece(from_y, x) is not None:
+                if board.get_piece(x, from_y) is not None:
                     return False
             return target_piece is None or target_piece.color != self.color
         return False

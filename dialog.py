@@ -23,7 +23,7 @@ class Dialog:
 
             text_surface = self.dialog_font.render(option['label'], True, BLACK)
             text_rect = text_surface.get_rect(center=button_rect.center)
-            self.overlay.blit(text_surface, text_rect)
+            # self.overlay.blit(text_surface, text_rect)
 
             option['rect'] = button_rect
             option_rects.append(button_rect)
@@ -53,6 +53,7 @@ class Dialog:
                         return None
 
     def show_promotion(self, x, y, board):
+        print('show_promotion')
         dialog = "Select a piece to promote to:"
         options = [
             {"label": "Rook", "action": "rook"},
@@ -66,6 +67,7 @@ class Dialog:
             board.promote_pawn(x, y, action)
 
     def show_proposal(self):
+        print('show_proposal')
         dialog = "Your opponent has offered a draw. Do you accept?"
         options = [
             {"label": "Accept", "action": "accept"},
