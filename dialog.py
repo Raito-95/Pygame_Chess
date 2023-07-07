@@ -31,7 +31,6 @@ class Dialog:
 
     def show_message(self, message, options=None):
         self.overlay.fill((0, 0, 0, 128))
-
         text_surface = self.dialog_font.render(message, True, BLACK)
         text_rect = text_surface.get_rect(center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2))
         self.overlay.blit(text_surface, text_rect)
@@ -61,7 +60,7 @@ class Dialog:
             {"label": "Bishop", "action": "bishop"},
             {"label": "Queen", "action": "queen"},
         ]
-
+        print('test1')
         action = self.show_message(dialog, options)
         if action:
             board.promote_pawn(x, y, action)
@@ -72,7 +71,7 @@ class Dialog:
             {"label": "Accept", "action": "accept"},
             {"label": "Decline", "action": "decline"},
         ]
-
+        print('test2')
         action = self.show_message(dialog, options)
 
         return action == "accept"

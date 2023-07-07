@@ -17,20 +17,19 @@ class Pawn(Piece):
         super().__init__(color, 'pawn', x, y)
 
     def move(self, board, from_x, from_y, to_x, to_y):
-        target_piece = board[to_y][to_x]
+        target_piece = board.get_piece(to_x, to_y)
         direction = -1 if self.color == 'white' else 1
-        x, y = board.last_move[1]
 
         if from_x == to_x:
             if target_piece is None:
                 if from_y + direction == to_y:
                     return True
-                if from_y in {1, 6} and from_y + 2 * direction == to_y and board[from_x][from_y + direction] is None:
+                if from_y in {1, 6} and from_y + 2 * direction == to_y and board.get_piece(from_x, from_y + direction) is None:
                     return True
         elif abs(from_x - to_x) == 1 and from_y + direction == to_y:
             if target_piece is not None and target_piece.color != self.color:
                 return True
-        elif board.last_move and isinstance(board[y][x], Pawn):
+        elif board.last_move and isinstance(board.last_move[1], Pawn):
             last_moved_piece_start_y = 1 if self.color == 'white' else 6
             if abs(from_x - to_x) == 1 and from_y + direction == to_y and \
                board.last_move[0][1] == last_moved_piece_start_y and board.last_move[1][1] == last_moved_piece_start_y + 2 * direction and board.last_move[1][0] == to_x:
@@ -48,7 +47,7 @@ class Rook(Piece):
         self.has_moved = True
 
     def move(self, board, from_x, from_y, to_x, to_y):
-        target_piece = board[to_y][to_x]
+        target_piece = board.get_piece(to_x, to_y)
 
         if from_x == to_x and from_y != to_y:
             direction_y = 1 if to_y > from_y else -1
@@ -70,7 +69,7 @@ class Knight(Piece):
         super().__init__(color, 'knight', x, y)
 
     def move(self, board, from_x, from_y, to_x, to_y):
-        target_piece = board[to_y][to_x]
+        target_piece = board.get_piece(to_x, to_y)
 
         dx, dy = abs(from_x - to_x), abs(from_y - to_y)
         if dx == 2 and dy == 1 or dx == 1 and dy == 2:
@@ -84,7 +83,7 @@ class Bishop(Piece):
         super().__init__(color, 'bishop', x, y)
 
     def move(self, board, from_x, from_y, to_x, to_y):
-        target_piece = board[to_y][to_x]
+        target_piece = board.get_piece(to_x, to_y)
 
         if from_x == to_x or from_y == to_y:
             return False
@@ -131,7 +130,7 @@ class King(Piece):
         self.has_moved = True
 
     def move(self, board, from_x, from_y, to_x, to_y):
-        target_piece = board[to_y][to_x]
+        target_piece = board.get_piece(to_x, to_y)
 
         if abs(from_x - to_x) <= 1 and abs(from_y - to_y) <= 1:
             if target_piece is None or target_piece.color != self.color:
@@ -144,7 +143,7 @@ class King(Piece):
         return False
 
     def castling(self, board, from_x, from_y, to_x, to_y):
-        piece = board[to_y][to_x]
+        piece = board.get_piece(to_x, to_y)
         if not isinstance(piece, King) or piece.has_moved:
             return False
 

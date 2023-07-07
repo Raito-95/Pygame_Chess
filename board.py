@@ -27,7 +27,7 @@ class Board:
     def reset_board(self):
         self.__init__()
 
-    def possible_moves(self, x, y):
+    def get_possible_moves(self, x, y):
         piece = self.board[y][x]
         if not piece:
             return []
@@ -36,16 +36,19 @@ class Board:
                  if self.vaild_move(x, y, move_x, move_y)]
         return moves
     
+    def get_piece(self, x, y):
+        return self.board[y][x]
+    
     def vaild_move(self, from_x, from_y, to_x, to_y):
-        piece = self.board[from_y][from_x]
+        piece = self.get_piece(from_x, from_y)
 
-        if piece.move(self, from_x, from_y, to_x, to_y):
+        if piece is not None and piece.move(self, from_x, from_y, to_x, to_y):
             return True
         return False
     
     def move_piece(self, from_x, from_y, to_x, to_y):
-        piece = self.board[from_y][from_x]
-        target_piece = self.board[to_y][to_x]
+        piece = self.get_piece(from_x, from_y)
+        target_piece = self.get_piece(to_x, to_y)
 
         if self.vaild_move(from_x, from_y, to_x, to_y):
             self.board[to_y][to_x] = piece
@@ -56,14 +59,14 @@ class Board:
             if isinstance(piece, King) and abs(to_x - from_x) == 2:
                 rook_from_x = 0 if to_x > from_x else 7
                 rook_to_x = (from_x + to_x) // 2
-
-                rook = self.board[rook_from_x][from_y]
-                self.board[rook_to_x][from_y] = rook
-                self.board[rook_from_x][from_y] = None
+                
+                rook = self.get_piece(rook_from_x, from_y)
+                self.board[from_y][rook_to_x] = rook
+                self.board[from_y][rook_from_x] = None
 
             if isinstance(piece, Pawn) and abs(from_y - to_y) == 1 and abs(from_x - to_x) == 1:
                 if isinstance(target_piece, Pawn):
-                    self.board[to_x][from_y] = None
+                    self.board[from_y][to_x] = None
             return True
         else:
             return False
@@ -77,7 +80,7 @@ class Board:
         return None, None
 
     def promote_pawn(self, x, y, piece_type):
-        piece = self.board[y][x]
+        piece = self.get_piece(x, y)
         self.board[y][x] = self.create_piece(piece.color, piece_type, x, y)
 
     def create_piece(self, color, piece_type, x, y):
@@ -90,7 +93,7 @@ class Board:
         elif piece_type == 'knight':
             return Knight(color, x, y)
 
-    def draw(self, screen, selected_piece):
+    def draw(self, screen):
         square_size = SCREEN_SIZE[1] // 8
 
         for y, x in [(y, x) for y in range(8) for x in range(8)]:
@@ -104,11 +107,11 @@ class Board:
                 piece_rect.center = rect.center
                 screen.blit(piece_image, piece_rect)
 
-                if selected_piece and selected_piece == (x, y):
+                if self.selected_piece and self.selected_piece == (x, y):
                     pygame.draw.rect(screen, RED, rect, 4)
 
-        if selected_piece:
-            possible_moves = self.possible_moves(*selected_piece)
+        if self.selected_piece:
+            possible_moves = self.get_possible_moves(*self.selected_piece)
             for move_x, move_y in possible_moves:
                 highlight_surface = pygame.Surface((square_size, square_size), pygame.SRCALPHA)
                 highlight_surface.fill((0, 0, 0, 0))
@@ -124,18 +127,18 @@ class Board:
         pygame.draw.rect(screen, (240, 240, 240), extra_area_rect)
 
     def select_piece(self, x, y):
-        piece = self.board[y][x]
+        piece = self.get_piece(x, y)
 
-        if piece.color == self.current_player:
+        if piece is not None and piece.color == self.current_player:
             self.selected_piece = (x, y)
             return True
         
         return False
 
     def square_attacked(self, x, y):
+        piece = self.get_piece(x, y)
         for row in range(8):
             for col in range(8):
-                piece = self.board[y][x]
                 if piece.color != self.current_player and self.vaild_move(col, row, x, y):
                     return True
         return False
@@ -165,7 +168,7 @@ class Board:
         for y, row in enumerate(self.board):
             for x, piece in enumerate(row):
                 if piece is not None and piece.color == self.current_player:
-                    valid_moves = self.possible_moves(x, y)
+                    valid_moves = self.get_possible_moves(x, y)
                     if any(self.vaild_move(x, y, *move) for move in valid_moves):
                         return False
 
@@ -175,9 +178,11 @@ class Board:
         if len(self.move_history) >= 8:
             if self.move_history[-1] == self.move_history[-5] and self.move_history[-3] == self.move_history[-7] and \
                     self.move_history[-2] == self.move_history[-6] and self.move_history[-4] == self.move_history[-8]:
+                print('a')
                 return True
 
         if self.half_move_counter >= 100:
+            print('b')
             return True
 
         kings_count = 0
@@ -189,6 +194,7 @@ class Board:
                 if piece is not None:
                     pieces_count += 1
         if kings_count == 2 and pieces_count == 2:
+            print('c')
             return True
 
         current_player_in_check = self.is_in_check()
@@ -196,14 +202,14 @@ class Board:
         for y, row in enumerate(self.board):
             for x, piece in enumerate(row):
                 if piece is not None and piece.color == self.current_player:
-                    valid_moves = self.possible_moves(x, y)
+                    valid_moves = self.get_possible_moves(x, y)
                     if any(self.vaild_move(x, y, *move) for move in valid_moves):
                         has_valid_moves = True
                         break
             if has_valid_moves:
                 break
 
-        if not current_player_in_check and not has_valid_moves:
+        if current_player_in_check and not has_valid_moves:
             return True
 
         return False

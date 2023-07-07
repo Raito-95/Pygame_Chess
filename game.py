@@ -15,7 +15,7 @@ class Game:
         self.running = True
         self.players = [Player('white'), Player('black')]
         self.current_player_index = 0
-        self.current_player = self.players[self.current_player_index]
+        self.current_player = self.players[self.current_player_index].color
 
         self.board = Board(self.current_player)
         self.dialog = Dialog(self.screen)
@@ -40,19 +40,21 @@ class Game:
         x, y = self.screen_to_board_coords(*pos)
         if not (0 <= x < 8) or not (0 <= y < 8):
             return
-        piece = self.board[y][x]
+        piece = self.board.get_piece(x, y)
         if self.board.selected_piece is None:
-            if piece.color == self.current_player:
+            if piece is not None and piece.color == self.current_player:
                 self.board.select_piece(x, y)
         elif (x, y) == self.board.selected_piece:
             self.board.selected_piece = None
         else:
-            if piece.color == self.current_player:
+            if piece is not None and piece.color == self.current_player:
                 self.board.selected_piece = None
                 self.board.select_piece(x, y)
             else:
-                self.board.move_piece(self.board.selected_piece[0], self.board.selected_piece[1], x, y)
-                self.current_player_index = 1 - self.current_player_index
+                if self.board.move_piece(self.board.selected_piece[0], self.board.selected_piece[1], x, y):
+                    self.current_player_index = 1 - self.current_player_index
+                    self.current_player = self.players[self.current_player_index].color
+                    self.board.selected_piece = None
 
     def run(self):
         while self.running:
@@ -63,16 +65,16 @@ class Game:
                     if event.button == 1:
                         self.handle_click(event.pos)
 
-            if self.board.stalemate(self.current_player):
+            if self.board.stalemate():
                 self.dialog.show_message("Draw!")
-            elif self.board.checkmate(self.current_player):
+            elif self.board.checkmate():
                 if self.current_player.color == 'white':
                     self.dialog.show_message("Black Wins!")
                 else:
                     self.dialog.show_message("White Wins!")
 
             pawn_to_promote = self.board.pawn_to_promote()
-            if pawn_to_promote:
+            if pawn_to_promote[0] is not None and pawn_to_promote[1] is not None:
                 x, y = pawn_to_promote
                 self.dialog.show_promotion(x, y, self.board)
 

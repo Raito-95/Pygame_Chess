@@ -9,8 +9,8 @@ class Menu:
         self.background_image = pygame.image.load('image/menu_background.jpg').convert()
         self.background_image = pygame.transform.scale(self.background_image, SCREEN_SIZE)
 
-        self.title_font = pygame.font.SysFont(None, FONTS_SIZE*2.5)
-        self.menu_font = pygame.font.SysFont(None, FONTS_SIZE*1.5)
+        self.title_font = pygame.font.SysFont(None, int(FONTS_SIZE*2.5))
+        self.menu_font = pygame.font.SysFont(None, int(FONTS_SIZE*1.5))
         self.options = [
             'NEW GAME',
             'EXIT'
