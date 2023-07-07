@@ -1,12 +1,12 @@
 import pygame
 from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, BUTTON_SPACING_RATIO, FONTS_SIZE, GRAY, BLACK
-
+from typing import Optional, List
 
 class Dialog:
     def __init__(self, screen):
         self.screen = screen
         self.overlay = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
-        self.dialog_font = pygame.font.SysFont(None, FONTS_SIZE)
+        self.dialog_font = pygame.font.SysFont("Arial", FONTS_SIZE)
         self.button_width = int(SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO)
         self.button_height = int(SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO)
         self.button_spacing = int(SCREEN_SIZE[1] * BUTTON_SPACING_RATIO)
@@ -28,8 +28,9 @@ class Dialog:
             option['rect'] = button_rect
             option_rects.append(button_rect)
         return option_rects
-
-    def show_message(self, message, options=None):
+    
+    def show_message(self, message, options=None) -> Optional[str]:
+        option_rects: List[pygame.Rect] = []
         self.overlay.fill((0, 0, 0, 128))
         text_surface = self.dialog_font.render(message, True, BLACK)
         text_rect = text_surface.get_rect(center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2))
@@ -41,16 +42,16 @@ class Dialog:
         self.screen.blit(self.overlay, (0, 0))
         pygame.display.flip()
         
-        if options is not None: 
-            while True:
-                for event in pygame.event.get():
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if event.button == 1:
-                            for option, rect in zip(options, option_rects):
-                                if rect.collidepoint(event.pos):
-                                    return option['action']
-                    elif event.type == pygame.QUIT:
-                        return None
+        while options is not None:
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        for option, rect in zip(options, option_rects):
+                            if rect.collidepoint(event.pos):
+                                return option['action']
+                elif event.type == pygame.QUIT:
+                    return None
+
 
     def show_promotion(self, x, y, board):
         print('show_promotion')

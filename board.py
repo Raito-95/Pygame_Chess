@@ -5,38 +5,47 @@ from constants import SCREEN_SIZE, WHITE, GRAY, RED, LIGHT_BLUE, piece_images
 
 class Board:
     def __init__(self, current_player, initialize=True):
-        if initialize:
-            self.board = [
-                [Rook('black', 0, 0), Knight('black', 1, 0), Bishop('black', 2, 0), Queen('black', 3, 0),
-                 King('black', 4, 0), Bishop('black', 5, 0), Knight('black', 6, 0), Rook('black', 7, 0)],
-                [Pawn('black', x, 1) for x in range(8)],
-                [None] * 8, [None] * 8, [None] * 8, [None] * 8,
-                [Pawn('white', x, 6) for x in range(8)],
-                [Rook('white', 0, 7), Knight('white', 1, 7), Bishop('white', 2, 7), Queen('white', 3, 7),
-                 King('white', 4, 7), Bishop('white', 5, 7), Knight('white', 6, 7), Rook('white', 7, 7)]
-            ]
-        else:
-            self.board = None
-
+        self.board = self.initialize_board() if initialize else self.default_board()
         self.current_player = current_player
         self.selected_piece = None
         self.last_move = None
         self.move_history = []
         self.half_move_counter = 0
 
+    def initialize_board(self):
+        return [
+            [Rook('black', 0, 0), Knight('black', 1, 0), Bishop('black', 2, 0), Queen('black', 3, 0),
+             King('black', 4, 0), Bishop('black', 5, 0), Knight('black', 6, 0), Rook('black', 7, 0)],
+            [Pawn('black', x, 1) for x in range(8)],
+            [None] * 8, [None] * 8, [None] * 8, [None] * 8,
+            [Pawn('white', x, 6) for x in range(8)],
+            [Rook('white', 0, 7), Knight('white', 1, 7), Bishop('white', 2, 7), Queen('white', 3, 7),
+             King('white', 4, 7), Bishop('white', 5, 7), Knight('white', 6, 7), Rook('white', 7, 7)]
+        ]
+
+    def default_board(self):
+        # Here you can define what your default board looks like when the board isn't initialized
+        # In this case, I'll just return an empty board
+        return [[None]*8 for _ in range(8)]
+
     def reset_board(self):
-        self.__init__()
+        self.__init__('white')
 
     def get_possible_moves(self, x, y):
+        if self.board is None:
+            return []
+
         piece = self.board[y][x]
         if not piece:
             return []
 
         moves = [(move_x, move_y) for move_y in range(8) for move_x in range(8)
-                 if self.vaild_move(x, y, move_x, move_y)]
+                if self.vaild_move(x, y, move_x, move_y)]
         return moves
     
     def get_piece(self, x, y):
+        if self.board is None:
+            return None
         return self.board[y][x]
     
     def vaild_move(self, from_x, from_y, to_x, to_y):
@@ -47,6 +56,9 @@ class Board:
         return False
     
     def move_piece(self, from_x, from_y, to_x, to_y):
+        if self.board is None:
+            return False
+        
         piece = self.get_piece(from_x, from_y)
         target_piece = self.get_piece(to_x, to_y)
 
@@ -72,6 +84,9 @@ class Board:
             return False
 
     def pawn_to_promote(self):
+        if self.board is None:
+            return None, None
+
         for y, row in enumerate(self.board):
             if y == 0 or y == 7:
                 for x, piece in enumerate(row):
@@ -80,7 +95,11 @@ class Board:
         return None, None
 
     def promote_pawn(self, x, y, piece_type):
+        if self.board is None:
+            return
         piece = self.get_piece(x, y)
+        if piece is None:
+            return
         self.board[y][x] = self.create_piece(piece.color, piece_type, x, y)
 
     def create_piece(self, color, piece_type, x, y):
@@ -94,6 +113,8 @@ class Board:
             return Knight(color, x, y)
 
     def draw(self, screen):
+        if self.board is None:
+            return
         square_size = SCREEN_SIZE[1] // 8
 
         for y, x in [(y, x) for y in range(8) for x in range(8)]:
@@ -137,6 +158,8 @@ class Board:
 
     def square_attacked(self, x, y):
         piece = self.get_piece(x, y)
+        if piece is None:
+            return False
         for row in range(8):
             for col in range(8):
                 if piece.color != self.current_player and self.vaild_move(col, row, x, y):
@@ -209,7 +232,7 @@ class Board:
             if has_valid_moves:
                 break
 
-        if current_player_in_check and not has_valid_moves:
+        if not current_player_in_check and not has_valid_moves:
             return True
 
         return False

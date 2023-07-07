@@ -69,7 +69,7 @@ class Game:
             if self.board.stalemate():
                 self.dialog.show_message("Draw!")
             elif self.board.checkmate():
-                if self.current_player.color == 'white':
+                if self.current_player == 'white':
                     self.dialog.show_message("Black Wins!")
                 else:
                     self.dialog.show_message("White Wins!")

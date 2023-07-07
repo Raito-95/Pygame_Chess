@@ -114,9 +114,9 @@ class Queen(Piece):
 
     def move(self, board, from_x, from_y, to_x, to_y):
         if from_x == to_x or from_y == to_y:
-            return Rook.move(self, board, from_x, from_y, to_x, to_y)
+            return Rook(self.color, from_x, from_y).move(board, from_x, from_y, to_x, to_y)
         elif abs(from_x - to_x) == abs(from_y - to_y):
-            return Bishop.move(self, board, from_x, from_y, to_x, to_y)
+            return Bishop(self.color, from_x, from_y).move(board, from_x, from_y, to_x, to_y)
         return False
 
 
