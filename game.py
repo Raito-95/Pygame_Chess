@@ -1,7 +1,7 @@
 import pygame
 import pygame.mixer as mixer
 from board import Board
-from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, FONTS_SIZE, WHITE, GRAY
+from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, GRAY
 from dialog import Dialog
 from player import Player
 
@@ -20,6 +20,7 @@ class Game:
         self.board = Board(self.current_player)
         self.dialog = Dialog(self.screen)
 
+        self.square_size = SCREEN_SIZE[1] // 8
         self.button_width = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO
         self.button_height = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
         self.button_x = SCREEN_SIZE[1] + ((SCREEN_SIZE[0] - SCREEN_SIZE[1]) // 2) - (self.button_width // 2)
@@ -27,8 +28,7 @@ class Game:
         self.button_rect = pygame.Rect(self.button_x, self.button_y, self.button_width, self.button_height)
 
     def screen_to_board_coords(self, screen_x, screen_y):
-        square_size = SCREEN_SIZE[1] // 8
-        return screen_x // square_size, screen_y // square_size
+        return screen_x // self.square_size, screen_y // self.square_size
 
     def draw_board(self):
         self.board.draw(self.screen)
@@ -40,7 +40,7 @@ class Game:
         x, y = self.screen_to_board_coords(*pos)
         if not (0 <= x < 8) or not (0 <= y < 8):
             return
-        piece = self.board.board[y][x]
+        piece = self.board[y][x]
         if self.board.selected_piece is None:
             if piece.color == self.current_player:
                 self.board.select_piece(x, y)
@@ -53,7 +53,6 @@ class Game:
             else:
                 self.board.move_piece(self.board.selected_piece[0], self.board.selected_piece[1], x, y)
                 self.current_player_index = 1 - self.current_player_index
-
 
     def run(self):
         while self.running:

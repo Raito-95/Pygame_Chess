@@ -1,6 +1,6 @@
 import sys
 import pygame
-from constants import SCREEN_SIZE, FONTS_SIZE, BUTTON_SPACING_RATIO
+from constants import SCREEN_SIZE, FONTS_SIZE, BUTTON_SPACING_RATIO, WHITE
 
 
 class Menu:
@@ -16,14 +16,14 @@ class Menu:
             'EXIT'
         ]
 
-        self.title_text = self.title_font.render('CHESS GAME', True, (255, 255, 255))
+        self.title_text = self.title_font.render('CHESS GAME', True, WHITE)
         self.title_rect = self.title_text.get_rect(center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 3))
 
         self.option_texts = []
         self.option_rects = []
 
         for i, option in enumerate(self.options):
-            option_text = self.menu_font.render(option, True, (255, 255, 255))
+            option_text = self.menu_font.render(option, True, WHITE)
             self.option_texts.append(option_text)
             option_rect = option_text.get_rect(
                 center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 + i * (SCREEN_SIZE[1] * BUTTON_SPACING_RATIO)))

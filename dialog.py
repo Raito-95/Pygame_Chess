@@ -1,5 +1,5 @@
 import pygame
-from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, BUTTON_SPACING_RATIO, FONTS_SIZE, WHITE, BLACK
+from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, BUTTON_SPACING_RATIO, FONTS_SIZE, GRAY, BLACK
 
 
 class Dialog:
@@ -19,7 +19,7 @@ class Dialog:
         for idx, option in enumerate(options):
             button_rect = pygame.Rect(
                 self.start_x, self.start_y + self.button_spacing * idx, self.button_width, self.button_height)
-            pygame.draw.rect(self.overlay, WHITE, button_rect)
+            pygame.draw.rect(self.overlay, GRAY, button_rect)
 
             text_surface = self.dialog_font.render(option['label'], True, BLACK)
             text_rect = text_surface.get_rect(center=button_rect.center)
