@@ -54,6 +54,7 @@ class Game:
                 if self.board.move_piece(self.board.selected_piece[0], self.board.selected_piece[1], x, y):
                     self.current_player_index = 1 - self.current_player_index
                     self.current_player = self.players[self.current_player_index].color
+                    self.board.current_player = self.current_player
                     self.board.selected_piece = None
 
     def run(self):

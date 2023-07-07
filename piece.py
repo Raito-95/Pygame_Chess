@@ -52,13 +52,13 @@ class Rook(Piece):
         if from_x == to_x and from_y != to_y:
             direction_y = 1 if to_y > from_y else -1
             for y in range(from_y + direction_y, to_y, direction_y):
-                if board[y][from_x] is not None:
+                if board.get_piece(from_x, y) is not None:
                     return False
             return target_piece is None or target_piece.color != self.color
         elif from_y == to_y and from_x != to_x:
             direction_x = 1 if to_x > from_x else -1
             for x in range(from_x + direction_x, to_x, direction_x):
-                if board[from_y][x] is not None:
+                if board.get_piece(from_y, x) is not None:
                     return False
             return target_piece is None or target_piece.color != self.color
         return False
@@ -100,7 +100,7 @@ class Bishop(Piece):
         current_x, current_y = from_x + direction_x, from_y + direction_y
 
         while current_x != to_x or current_y != to_y:
-            if board[current_y][current_x] is not None:
+            if board.get_piece(current_x, current_y) is not None:
                 return False
             current_x += direction_x
             current_y += direction_y
@@ -156,12 +156,12 @@ class King(Piece):
         else:
             rook_x = 0
             step = -1
-        rook = board[from_y][rook_x]
+        rook = board.get_piece(rook_x, from_y)
         if not isinstance(rook, Rook) or rook.has_moved:
             return False
 
         for x in range(from_x + step, rook_x, step):
-            if board[from_y][x] is not None or board.square_attacked(x, from_y, piece.color):
+            if board.get_piece(x, from_y) is not None or board.square_attacked(x, from_y, piece.color):
                 return False
 
         if board.square_attacked(from_x, from_y, piece.color) or board.square_attacked(to_x, to_y, piece.color):
