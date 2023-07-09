@@ -19,6 +19,10 @@ class Pawn(Piece):
     def move(self, board, from_x, from_y, to_x, to_y):
         target_piece = board.get_piece(to_x, to_y)
         direction = -1 if self.color == 'white' else 1
+        last_piece = None
+
+        if board.last_move is not None:
+            last_piece = board.get_piece(board.last_move[1][0], board.last_move[1][1])
 
         if from_x == to_x:
             if target_piece is None:
@@ -29,10 +33,10 @@ class Pawn(Piece):
         elif abs(from_x - to_x) == 1 and from_y + direction == to_y:
             if target_piece is not None and target_piece.color != self.color:
                 return True
-        elif board.last_move and isinstance(board.last_move[1], Pawn):
-            last_moved_piece_start_y = 1 if self.color == 'white' else 6
-            if abs(from_x - to_x) == 1 and from_y + direction == to_y and \
-               board.last_move[0][1] == last_moved_piece_start_y and board.last_move[1][1] == last_moved_piece_start_y + 2 * direction and board.last_move[1][0] == to_x:
+        elif isinstance(last_piece, Pawn):
+            last_moved_piece_start_y = 6 if last_piece.color == 'white' else 1
+            if abs(from_x - board.last_move[1][0]) == 1 and from_y + direction == to_y and \
+               board.last_move[0][1] == last_moved_piece_start_y and board.last_move[1][1] == last_moved_piece_start_y - 2 * direction and board.last_move[1][0] == to_x:
                 return True
         return False
 
