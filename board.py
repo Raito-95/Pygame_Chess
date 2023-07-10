@@ -1,4 +1,5 @@
 import pygame
+from player import Player
 from piece import Pawn, Rook, Knight, Bishop, Queen, King
 from constants import SCREEN_SIZE, WHITE, BLACK, GRAY, RED, LIGHT_BLUE, piece_images, BUTTON_WIDTH, BUTTON_HEIGHT, FONTS_SIZE
 
@@ -11,11 +12,12 @@ class Board:
         self.last_move = None
         self.move_history = []
         self.half_move_counter = 0
-        
-        self.dialog_font = pygame.font.SysFont("Script MT Bold", FONTS_SIZE)
+
+        self.button_font = pygame.font.SysFont("Script MT Bold", FONTS_SIZE)
         self.button_x = SCREEN_SIZE[0] - BUTTON_WIDTH
         self.button_y = SCREEN_SIZE[1] - BUTTON_HEIGHT
         self.button_rect = pygame.Rect(self.button_x, self.button_y, BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.MAX_HISTORY_LENGTH = 8
 
     def initialize_board(self):
         return [
@@ -53,6 +55,12 @@ class Board:
             return None
         return self.board[y][x]
     
+    def add_move_to_history(self, coor1, coor2):
+        move = (coor1, coor2)
+        if len(self.move_history) >= self.MAX_HISTORY_LENGTH:
+            self.move_history.pop(0)
+        self.move_history.append(move)
+
     def vaild_move(self, from_x, from_y, to_x, to_y):
         piece = self.get_piece(from_x, from_y)
 
@@ -67,10 +75,17 @@ class Board:
         piece = self.get_piece(from_x, from_y)
 
         if self.vaild_move(from_x, from_y, to_x, to_y):
+            self.half_move_counter+=1
+            if self.board[to_y][to_x] is not None:
+                player_color = 'black' if self.current_player == 'white' else 'white'
+                player = Player(player_color)
+                player.captured_history(self.board[to_y][to_x])
+                self.half_move_counter = 0
             self.board[to_y][to_x] = piece
             self.board[from_y][from_x] = None
 
             self.last_move = ((from_x, from_y), (to_x, to_y))
+            self.add_move_to_history((from_x, from_y), (to_x, to_y))
 
             if isinstance(piece, King) and abs(to_x - from_x) == 2:
                 rook_from_x = 7 if to_x > from_x else 0
@@ -82,6 +97,7 @@ class Board:
 
             if isinstance(piece, Pawn) and abs(from_y - to_y) == 1 and abs(from_x - to_x) == 1:
                 self.board[from_y][to_x] = None
+            
             return True
         else:
             return False
@@ -153,7 +169,7 @@ class Board:
     def draw_button(self, screen):
         pygame.draw.rect(screen, GRAY, self.button_rect)
 
-        text_surface = self.dialog_font.render("Proposal", True, BLACK)
+        text_surface = self.button_font.render("Proposal", True, BLACK)
         text_rect = text_surface.get_rect(center=self.button_rect.center)
         screen.blit(text_surface, text_rect)
 
