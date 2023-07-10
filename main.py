@@ -6,6 +6,7 @@ from game import Game
 from constants import SCREEN_SIZE
 
 
+
 def main():
     icon_surface = pygame.image.load('image/icon.png')
 

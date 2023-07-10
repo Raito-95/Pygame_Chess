@@ -21,11 +21,6 @@ class Game:
         self.dialog = Dialog(self.screen)
 
         self.square_size = SCREEN_SIZE[1] // 8
-        self.button_width = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO
-        self.button_height = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
-        self.button_x = SCREEN_SIZE[1] + ((SCREEN_SIZE[0] - SCREEN_SIZE[1]) // 2) - (self.button_width // 2)
-        self.button_y = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO * 7
-        self.button_rect = pygame.Rect(self.button_x, self.button_y, self.button_width, self.button_height)
 
     def screen_to_board_coords(self, screen_x, screen_y):
         return screen_x // self.square_size, screen_y // self.square_size
@@ -33,14 +28,22 @@ class Game:
     def draw_board(self):
         self.board.draw(self.screen)
         self.board.draw_extra_area(self.screen)
-        
-        pygame.draw.rect(self.screen, GRAY, self.button_rect)
+        self.board.draw_button(self.screen)
+
+        self.button_width = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO
+        self.button_height = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
+        self.button_x = SCREEN_SIZE[0] - self.button_width
+        self.button_y = SCREEN_SIZE[1] - self.button_height
+
 
     def handle_click(self, pos):
         x, y = self.screen_to_board_coords(*pos)
+        if self.board.button_rect.collidepoint(x, y):
+            self.dialog.show_proposal()
         if not (0 <= x < 8) or not (0 <= y < 8):
             return
         piece = self.board.get_piece(x, y)
+        
         if self.board.selected_piece is None:
             if piece is not None and piece.color == self.current_player:
                 self.board.select_piece(x, y)
@@ -57,6 +60,24 @@ class Game:
                     self.board.current_player = self.current_player
                     self.board.selected_piece = None
 
+                    if self.board.stalemate():
+                        self.dialog.show_message("Draw!")
+                    elif self.board.checkmate():
+                        if self.current_player == 'white':
+                            self.dialog.show_message("Black Wins!")
+                        else:
+                            self.dialog.show_message("White Wins!")
+                    elif self.board.is_king_captured(self.current_player):
+                        if self.current_player == 'white':
+                            self.dialog.show_message("Black Wins!")
+                        else:
+                            self.dialog.show_message("White Wins!")
+
+                    pawn_to_promote = self.board.pawn_to_promote()
+                    if pawn_to_promote[0] is not None and pawn_to_promote[1] is not None:
+                        x, y = pawn_to_promote
+                        self.dialog.show_promotion(x, y, self.board)
+
     def run(self):
         while self.running:
             for event in pygame.event.get():
@@ -65,19 +86,6 @@ class Game:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         self.handle_click(event.pos)
-
-            if self.board.stalemate():
-                self.dialog.show_message("Draw!")
-            elif self.board.checkmate():
-                if self.current_player == 'white':
-                    self.dialog.show_message("Black Wins!")
-                else:
-                    self.dialog.show_message("White Wins!")
-
-            pawn_to_promote = self.board.pawn_to_promote()
-            if pawn_to_promote[0] is not None and pawn_to_promote[1] is not None:
-                x, y = pawn_to_promote
-                self.dialog.show_promotion(x, y, self.board)
 
             self.draw_board()
             pygame.display.flip()

@@ -1,6 +1,6 @@
 import pygame
 from piece import Pawn, Rook, Knight, Bishop, Queen, King
-from constants import SCREEN_SIZE, WHITE, GRAY, RED, LIGHT_BLUE, piece_images
+from constants import SCREEN_SIZE, WHITE, BLACK, GRAY, RED, LIGHT_BLUE, piece_images, BUTTON_WIDTH, BUTTON_HEIGHT, FONTS_SIZE
 
 
 class Board:
@@ -11,6 +11,11 @@ class Board:
         self.last_move = None
         self.move_history = []
         self.half_move_counter = 0
+        
+        self.dialog_font = pygame.font.SysFont("Script MT Bold", FONTS_SIZE)
+        self.button_x = SCREEN_SIZE[0] - BUTTON_WIDTH
+        self.button_y = SCREEN_SIZE[1] - BUTTON_HEIGHT
+        self.button_rect = pygame.Rect(self.button_x, self.button_y, BUTTON_WIDTH, BUTTON_HEIGHT)
 
     def initialize_board(self):
         return [
@@ -60,7 +65,6 @@ class Board:
             return False
         
         piece = self.get_piece(from_x, from_y)
-        target_piece = self.get_piece(to_x, to_y)
 
         if self.vaild_move(from_x, from_y, to_x, to_y):
             self.board[to_y][to_x] = piece
@@ -69,7 +73,7 @@ class Board:
             self.last_move = ((from_x, from_y), (to_x, to_y))
 
             if isinstance(piece, King) and abs(to_x - from_x) == 2:
-                rook_from_x = 0 if to_x > from_x else 7
+                rook_from_x = 7 if to_x > from_x else 0
                 rook_to_x = (from_x + to_x) // 2
                 
                 rook = self.get_piece(rook_from_x, from_y)
@@ -77,8 +81,7 @@ class Board:
                 self.board[from_y][rook_from_x] = None
 
             if isinstance(piece, Pawn) and abs(from_y - to_y) == 1 and abs(from_x - to_x) == 1:
-                if isinstance(target_piece, Pawn):
-                    self.board[from_y][to_x] = None
+                self.board[from_y][to_x] = None
             return True
         else:
             return False
@@ -147,6 +150,13 @@ class Board:
         extra_area_rect = pygame.Rect(SCREEN_SIZE[1], 0, extra_area_width, extra_area_height)
         pygame.draw.rect(screen, (240, 240, 240), extra_area_rect)
 
+    def draw_button(self, screen):
+        pygame.draw.rect(screen, GRAY, self.button_rect)
+
+        text_surface = self.dialog_font.render("Proposal", True, BLACK)
+        text_rect = text_surface.get_rect(center=self.button_rect.center)
+        screen.blit(text_surface, text_rect)
+
     def select_piece(self, x, y):
         piece = self.get_piece(x, y)
 
@@ -155,6 +165,14 @@ class Board:
             return True
         
         return False
+
+    def is_king_captured(self, opponent):
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(col, row)
+                if isinstance(piece, King) and piece.color == opponent:
+                    return False
+        return True
 
     def square_attacked(self, x, y):
         piece = self.get_piece(x, y)
@@ -201,11 +219,9 @@ class Board:
         if len(self.move_history) >= 8:
             if self.move_history[-1] == self.move_history[-5] and self.move_history[-3] == self.move_history[-7] and \
                     self.move_history[-2] == self.move_history[-6] and self.move_history[-4] == self.move_history[-8]:
-                print('a')
                 return True
 
         if self.half_move_counter >= 100:
-            print('b')
             return True
 
         kings_count = 0
@@ -217,7 +233,6 @@ class Board:
                 if piece is not None:
                     pieces_count += 1
         if kings_count == 2 and pieces_count == 2:
-            print('c')
             return True
 
         current_player_in_check = self.is_in_check()

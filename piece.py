@@ -33,10 +33,11 @@ class Pawn(Piece):
         elif abs(from_x - to_x) == 1 and from_y + direction == to_y:
             if target_piece is not None and target_piece.color != self.color:
                 return True
-        elif isinstance(last_piece, Pawn):
+        if isinstance(last_piece, Pawn) and last_piece.color != self.color:
             last_moved_piece_start_y = 6 if last_piece.color == 'white' else 1
-            if abs(from_x - board.last_move[1][0]) == 1 and from_y + direction == to_y and \
-               board.last_move[0][1] == last_moved_piece_start_y and board.last_move[1][1] == last_moved_piece_start_y - 2 * direction and board.last_move[1][0] == to_x:
+            if abs(from_x - board.last_move[1][0]) == 1 and board.last_move[0][1] == last_moved_piece_start_y and \
+                    board.last_move[1][1] == last_moved_piece_start_y + 2 * direction and to_x == board.last_move[1][0] and \
+                    to_y == last_moved_piece_start_y:
                 return True
         return False
 
