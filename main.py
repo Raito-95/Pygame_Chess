@@ -6,7 +6,6 @@ from game import Game
 from constants import SCREEN_SIZE
 
 
-
 def main():
     icon_surface = pygame.image.load('image/icon.png')
 
@@ -17,8 +16,8 @@ def main():
     screen = pygame.display.set_mode(SCREEN_SIZE)
     screen.set_alpha(None)
 
-    # mixer.music.load('music/background.mp3')
-    # mixer.music.play(-1)
+    mixer.music.load('music/background.mp3')
+    mixer.music.play(-1)
 
     menu = Menu(screen)
 
@@ -29,7 +28,7 @@ def main():
         menu.draw()
 
     game = Game(screen)
-    # game.change_music('music/fighting.mp3')
+    game.change_music('music/fighting.mp3')
     game.run()
 
     pygame.quit()

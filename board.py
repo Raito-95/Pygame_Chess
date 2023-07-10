@@ -1,7 +1,7 @@
 import pygame
 from player import Player
 from piece import Pawn, Rook, Knight, Bishop, Queen, King
-from constants import SCREEN_SIZE, WHITE, BLACK, GRAY, RED, LIGHT_BLUE, piece_images, BUTTON_WIDTH, BUTTON_HEIGHT, FONTS_SIZE
+from constants import SCREEN_SIZE, WHITE, GRAY, RED, LIGHT_BLUE, piece_images
 
 
 class Board:
@@ -12,11 +12,7 @@ class Board:
         self.last_move = None
         self.move_history = []
         self.half_move_counter = 0
-
-        self.button_font = pygame.font.SysFont("Script MT Bold", FONTS_SIZE)
-        self.button_x = SCREEN_SIZE[0] - BUTTON_WIDTH
-        self.button_y = SCREEN_SIZE[1] - BUTTON_HEIGHT
-        self.button_rect = pygame.Rect(self.button_x, self.button_y, BUTTON_WIDTH, BUTTON_HEIGHT)
+        
         self.MAX_HISTORY_LENGTH = 8
 
     def initialize_board(self):
@@ -31,8 +27,6 @@ class Board:
         ]
 
     def default_board(self):
-        # Here you can define what your default board looks like when the board isn't initialized
-        # In this case, I'll just return an empty board
         return [[None]*8 for _ in range(8)]
 
     def reset_board(self):
@@ -165,13 +159,6 @@ class Board:
         extra_area_height = SCREEN_SIZE[1]
         extra_area_rect = pygame.Rect(SCREEN_SIZE[1], 0, extra_area_width, extra_area_height)
         pygame.draw.rect(screen, (240, 240, 240), extra_area_rect)
-
-    def draw_button(self, screen):
-        pygame.draw.rect(screen, GRAY, self.button_rect)
-
-        text_surface = self.button_font.render("Proposal", True, BLACK)
-        text_rect = text_surface.get_rect(center=self.button_rect.center)
-        screen.blit(text_surface, text_rect)
 
     def select_piece(self, x, y):
         piece = self.get_piece(x, y)

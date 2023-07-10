@@ -1,7 +1,7 @@
 import pygame
 import pygame.mixer as mixer
 from board import Board
-from constants import SCREEN_SIZE, BUTTON_WIDTH_RATIO, BUTTON_HEIGHT_RATIO, GRAY
+from constants import SCREEN_SIZE, FONTS_SIZE, BUTTON_WIDTH, BUTTON_HEIGHT
 from dialog import Dialog
 from player import Player
 
@@ -21,24 +21,23 @@ class Game:
         self.dialog = Dialog(self.screen)
 
         self.square_size = SCREEN_SIZE[1] // 8
+        self.button_font = pygame.font.SysFont("Script MT Bold", FONTS_SIZE)
+        self.button_text = "Proposal"
+        self.button_x = SCREEN_SIZE[0] - BUTTON_WIDTH
+        self.button_y = SCREEN_SIZE[1] - BUTTON_HEIGHT
+        self.button_rect = pygame.Rect(self.button_x, self.button_y, BUTTON_WIDTH, BUTTON_HEIGHT)
 
     def screen_to_board_coords(self, screen_x, screen_y):
         return screen_x // self.square_size, screen_y // self.square_size
-
+    
     def draw_board(self):
         self.board.draw(self.screen)
         self.board.draw_extra_area(self.screen)
-        self.board.draw_button(self.screen)
-
-        self.button_width = SCREEN_SIZE[0] * BUTTON_WIDTH_RATIO
-        self.button_height = SCREEN_SIZE[1] * BUTTON_HEIGHT_RATIO
-        self.button_x = SCREEN_SIZE[0] - self.button_width
-        self.button_y = SCREEN_SIZE[1] - self.button_height
-
+        self.dialog.draw_button(self.button_rect, self.button_text)
 
     def handle_click(self, pos):
         x, y = self.screen_to_board_coords(*pos)
-        if self.board.button_rect.collidepoint(x, y):
+        if self.button_rect.collidepoint(x, y):
             self.dialog.show_proposal()
         if not (0 <= x < 8) or not (0 <= y < 8):
             return
