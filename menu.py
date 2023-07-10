@@ -11,7 +11,7 @@ class Menu:
 
         self.title_font = pygame.font.SysFont("Script MT Bold", int(FONTS_SIZE*2.5))
         self.menu_font = pygame.font.SysFont("Script MT Bold", int(FONTS_SIZE*1.5))
-        self.options = [
+        self.menu_options = [
             'NEW GAME',
             'EXIT'
         ]
@@ -22,7 +22,7 @@ class Menu:
         self.option_texts = []
         self.option_rects = []
 
-        for i, option in enumerate(self.options):
+        for i, option in enumerate(self.menu_options):
             option_text = self.menu_font.render(option, True, WHITE)
             self.option_texts.append(option_text)
             option_rect = option_text.get_rect(
