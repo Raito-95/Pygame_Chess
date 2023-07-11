@@ -1,9 +1,10 @@
 import pygame
-import pygame.mixer as mixer
+from pygame import mixer
 from board import Board
 from constants import SCREEN_SIZE, FONTS_SIZE, BUTTON_WIDTH, BUTTON_HEIGHT
 from dialog import Dialog
 from player import Player
+from AI.test import Ai
 
 
 class Game:
@@ -18,6 +19,7 @@ class Game:
         self.current_player = self.players[self.current_player_index].color
 
         self.board = Board(self.current_player)
+        self.ai = Ai(self.board)
         self.dialog = Dialog(self.screen)
 
         self.square_size = SCREEN_SIZE[1] // 8
@@ -90,6 +92,9 @@ class Game:
                         self.handle_click(event.pos)
 
             self.draw_board()
+            best_move = self.ai.get_best_move(depth=3)
+            print(f'best_move: {best_move}')
+            
             pygame.display.flip()
             self.clock.tick(30)
 

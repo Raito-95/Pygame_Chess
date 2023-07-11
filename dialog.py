@@ -1,12 +1,12 @@
 import pygame
-from constants import SCREEN_SIZE, FONTS_SIZE, BUTTON_SPACING_RATIO, GRAY, LIGHT_GRAY, BLACK, BUTTON_WIDTH, BUTTON_HEIGHT 
+from constants import SCREEN_SIZE, FONTS_SIZE, BUTTON_SPACING_RATIO, GRAY, LIGHT_GRAY, BLACK, BUTTON_WIDTH, BUTTON_HEIGHT
 from typing import Optional, List
 
 
 class Dialog:
     def __init__(self, screen):
         self.screen = screen
-        
+
         self.button_spacing = int(SCREEN_SIZE[1] * BUTTON_SPACING_RATIO)
 
         self.dialog_font = pygame.font.SysFont("Script MT Bold", FONTS_SIZE)
@@ -32,19 +32,19 @@ class Dialog:
             option['rect'] = button_rect
             option_rects.append(button_rect)
         return option_rects
-    
+
     def show_message(self, message, options=None) -> Optional[str]:
         option_rects: List[pygame.Rect] = []
         text_surface = self.dialog_font.render(message, True, BLACK)
         text_rect = text_surface.get_rect(center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2))
         self.screen.blit(text_surface, text_rect)
-        
-        if options is not None: 
+
+        if options is not None:
             mouse_pos = pygame.mouse.get_pos()
             option_rects = self.draw_option_buttons(options, mouse_pos)
 
         pygame.display.flip()
-        
+
         while options is not None:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:

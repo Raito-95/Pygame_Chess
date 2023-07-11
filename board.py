@@ -13,7 +13,7 @@ class Board:
         self.move_history = []
         self.half_move_counter = 0
         
-        self.MAX_HISTORY_LENGTH = 8
+        self.max_history_length = 8
 
     def initialize_board(self):
         return [
@@ -51,7 +51,7 @@ class Board:
     
     def add_move_to_history(self, coor1, coor2):
         move = (coor1, coor2)
-        if len(self.move_history) >= self.MAX_HISTORY_LENGTH:
+        if len(self.move_history) >= self.max_history_length:
             self.move_history.pop(0)
         self.move_history.append(move)
 

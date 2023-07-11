@@ -6,14 +6,7 @@ from game import Game
 from constants import SCREEN_SIZE
 
 
-def main():
-    pygame.init()
-
-    icon = pygame.image.load('image/icon.png')
-    pygame.display.set_icon(icon)
-    pygame.display.set_caption('Chess Game')
-    screen = pygame.display.set_mode(SCREEN_SIZE)
-
+def run_menu(screen):
     mixer.music.load('music/background.mp3')
     mixer.music.play(-1)
 
@@ -24,7 +17,18 @@ def main():
             break
 
         menu.draw()
-    
+
+
+def main():
+    pygame.init()
+
+    icon = pygame.image.load('image/icon.png')
+    pygame.display.set_icon(icon)
+    pygame.display.set_caption('Chess Game')
+    screen = pygame.display.set_mode(SCREEN_SIZE)
+
+    run_menu(screen)
+
     game = Game(screen)
     game.change_music('music/fighting.mp3')
     game.run()
