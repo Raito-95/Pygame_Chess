@@ -20,6 +20,7 @@ class Game:
 
         self.board = Board(self.current_player)
         self.ai = Ai(self.board)
+        self.scan_flag = True
         self.dialog = Dialog(self.screen)
 
         self.square_size = SCREEN_SIZE[1] // 8
@@ -90,10 +91,13 @@ class Game:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         self.handle_click(event.pos)
+                        self.scan_flag = True
 
             self.draw_board()
-            best_move = self.ai.get_best_move(depth=3)
-            print(f'best_move: {best_move}')
+            if self.scan_flag:
+                best_move = self.ai.get_best_move(depth=3)
+                print(f'best_move: {best_move}')
+                self.scan_flag = False
             
             pygame.display.flip()
             self.clock.tick(30)
