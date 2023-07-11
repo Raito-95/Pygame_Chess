@@ -74,5 +74,7 @@ class Dialog:
             {"label": "Decline", "action": "decline"},
         ]
         action = self.show_message(dialog, options)
-
-        return action == "accept"
+        if action == "accept":
+            return True
+        else:
+            return False

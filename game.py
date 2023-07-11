@@ -38,7 +38,10 @@ class Game:
     def handle_click(self, pos):
         x, y = self.screen_to_board_coords(*pos)
         if self.button_rect.collidepoint(x, y):
-            self.dialog.show_proposal()
+            if self.dialog.show_proposal():
+                self.dialog.show_message("Draw!")
+                self.board.reset_board()
+
         if not (0 <= x < 8) or not (0 <= y < 8):
             return
         piece = self.board.get_piece(x, y)
