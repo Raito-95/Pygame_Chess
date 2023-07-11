@@ -4,7 +4,7 @@ from board import Board
 from constants import SCREEN_SIZE, FONTS_SIZE, BUTTON_WIDTH, BUTTON_HEIGHT
 from dialog import Dialog
 from player import Player
-from AI.test import Ai
+from AI.minimax import Ai
 
 
 class Game:

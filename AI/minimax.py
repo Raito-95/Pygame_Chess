@@ -11,6 +11,7 @@ class Ai:
                 piece = self.board[row][col]
                 if piece is not None:
                     self.chess_board.set_piece_at(chess.square(col, row), piece)
+        print(f'chess_board:{self.chess_board}')
 
     def minimax(self, depth, maximizing_player=False):
         if depth == 0 or self.chess_board.is_game_over():
