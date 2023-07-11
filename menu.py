@@ -13,6 +13,7 @@ class Menu:
         self.menu_font = pygame.font.SysFont("Script MT Bold", int(FONTS_SIZE*1.5))
         self.menu_options = [
             'NEW GAME',
+            'PRACTICE MODE',
             'EXIT'
         ]
 
@@ -48,9 +49,9 @@ class Menu:
                     mouse_pos = pygame.mouse.get_pos()
                     for i, option_rect in enumerate(self.option_rects):
                         if option_rect.collidepoint(mouse_pos):
-                            if i == 0:
+                            if i == 0 or i == 1:
                                 return True
-                            elif i == 1:
+                            elif i == 2:
                                 pygame.quit()
                                 sys.exit()
 
