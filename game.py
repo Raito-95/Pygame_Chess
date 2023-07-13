@@ -19,8 +19,8 @@ class Game:
         self.current_player = self.players[self.current_player_index].color
 
         self.board = Board(self.current_player)
-        self.ai = Ai(self.board)
-        self.scan_flag = True
+        self.ai = Ai()
+        self.scan_flag = False
         self.dialog = Dialog(self.screen)
 
         self.square_size = SCREEN_SIZE[1] // 8
@@ -95,8 +95,9 @@ class Game:
 
             self.draw_board()
             if self.scan_flag:
-                best_move = self.ai.get_best_move(depth=3)
-                print(f'best_move: {best_move}')
+                best_move = self.ai.get_best_move(depth=6)
+                if best_move is not None:
+                    self.ai.chess_board.push(best_move)
                 self.scan_flag = False
             
             pygame.display.flip()

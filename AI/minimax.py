@@ -3,17 +3,10 @@ import chess.engine
 
 
 class Ai:
-    def __init__(self, board):
-        self.board = board
+    def __init__(self):
         self.chess_board = chess.Board()
-        for row in range(8):
-            for col in range(8):
-                piece = self.board[row][col]
-                if piece is not None:
-                    self.chess_board.set_piece_at(chess.square(col, row), piece)
-        print(f'chess_board:{self.chess_board}')
 
-    def minimax(self, depth, maximizing_player=False):
+    def minimax(self, depth, alpha, beta, maximizing_player=False):
         if depth == 0 or self.chess_board.is_game_over():
             return self.evaluate()
 
@@ -21,17 +14,23 @@ class Ai:
             max_eval = float('-inf')
             for move in self.chess_board.legal_moves:
                 self.chess_board.push(move)
-                eval = self.minimax(depth - 1)
+                eval = self.minimax(depth - 1, alpha, beta)
                 self.chess_board.pop()
                 max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
             return max_eval
         else:
             min_eval = float('inf')
             for move in self.chess_board.legal_moves:
                 self.chess_board.push(move)
-                eval = self.minimax(depth - 1, True)
+                eval = self.minimax(depth - 1, alpha, beta, True)
                 self.chess_board.pop()
                 min_eval = min(min_eval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
             return min_eval
 
     def evaluate(self):
@@ -43,11 +42,14 @@ class Ai:
     def get_best_move(self, depth):
         best_move = None
         max_eval = float('-inf')
+        alpha = float('-inf')
+        beta = float('inf')
         for move in self.chess_board.legal_moves:
             self.chess_board.push(move)
-            eval = self.minimax(depth - 1)
+            eval = self.minimax(depth - 1, alpha, beta)
             self.chess_board.pop()
             if eval > max_eval:
                 max_eval = eval
                 best_move = move
+            alpha = max(alpha, eval)
         return best_move
