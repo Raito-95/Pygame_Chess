@@ -19,26 +19,31 @@ class Pawn(Piece):
     def move(self, board, from_x, from_y, to_x, to_y):
         target_piece = board.get_piece(to_x, to_y)
         direction = -1 if self.color == 'white' else 1
-        last_piece = None
-
-        if board.last_move is not None:
-            last_piece = board.get_piece(board.last_move[1][0], board.last_move[1][1])
+        last_move = board.last_move
 
         if from_x == to_x:
             if target_piece is None:
-                if from_y + direction == to_y:
+                if to_y - from_y == direction:
                     return True
-                if from_y in {1, 6} and from_y + 2 * direction == to_y and board.get_piece(from_x, from_y + direction) is None:
+                if from_y in {1, 6} and to_y - from_y == 2 * direction and board.get_piece(from_x, from_y + direction) is None:
                     return True
-        elif abs(from_x - to_x) == 1 and from_y + direction == to_y:
+        elif abs(from_x - to_x) == 1 and to_y - from_y == direction:
             if target_piece is not None and target_piece.color != self.color:
                 return True
-        if isinstance(last_piece, Pawn) and last_piece.color != self.color:
-            last_moved_piece_start_y = 6 if last_piece.color == 'white' else 1
-            if abs(from_x - board.last_move[1][0]) == 1 and board.last_move[0][1] == last_moved_piece_start_y and \
-                    board.last_move[1][1] == last_moved_piece_start_y + 2 * direction and to_x == board.last_move[1][0] and \
-                    to_y == last_moved_piece_start_y:
-                return True
+
+        if last_move is not None:
+            last_piece = board.get_piece(last_move[1][0], last_move[1][1])
+            if isinstance(last_piece, Pawn) and last_piece.color != self.color:
+                last_moved_piece_start_y = 6 if last_piece.color == 'white' else 1
+                if (
+                    abs(from_x - last_move[1][0]) == 1
+                    and last_move[0][1] == last_moved_piece_start_y
+                    and last_move[1][1] == last_moved_piece_start_y + 2 * direction
+                    and to_x == last_move[1][0]
+                    and to_y == last_moved_piece_start_y
+                ):
+                    return True
+
         return False
 
 
@@ -56,16 +61,18 @@ class Rook(Piece):
 
         if from_x == to_x and from_y != to_y:
             direction_y = 1 if to_y > from_y else -1
-            for y in range(from_y + direction_y, to_y, direction_y):
-                if board.get_piece(from_x, y) is not None:
-                    return False
+            if any(board.get_piece(from_x, y) is not None for y in range(from_y + direction_y, to_y, direction_y)):
+                return False
+            self.moved()
             return target_piece is None or target_piece.color != self.color
-        elif from_y == to_y and from_x != to_x:
+
+        if from_y == to_y and from_x != to_x:
             direction_x = 1 if to_x > from_x else -1
-            for x in range(from_x + direction_x, to_x, direction_x):
-                if board.get_piece(x, from_y) is not None:
-                    return False
+            if any(board.get_piece(x, from_y) is not None for x in range(from_x + direction_x, to_x, direction_x)):
+                return False
+            self.moved()
             return target_piece is None or target_piece.color != self.color
+
         return False
 
 
@@ -137,10 +144,12 @@ class King(Piece):
     def move(self, board, from_x, from_y, to_x, to_y):
         target_piece = board.get_piece(to_x, to_y)
 
-        if abs(from_x - to_x) <= 1 and abs(from_y - to_y) <= 1:
-            if target_piece is None or target_piece.color != self.color:
-                if not board.square_attacked(to_x, to_y, self.color):
-                    return True
+        dx = abs(from_x - to_x)
+        dy = abs(from_y - to_y)
+
+        if dx <= 1 and dy <= 1 and (target_piece is None or target_piece.color != self.color) and not board.square_attacked(to_x, to_y):
+            self.moved()
+            return True
 
         if self.castling(board, from_x, from_y, to_x, to_y):
             return True
@@ -166,10 +175,10 @@ class King(Piece):
             return False
 
         for x in range(from_x + step, rook_x, step):
-            if board.get_piece(x, from_y) is not None or board.square_attacked(x, from_y, piece.color):
+            if board.get_piece(x, from_y) is not None or board.square_attacked(x, from_y):
                 return False
 
-        if board.square_attacked(from_x, from_y, piece.color) or board.square_attacked(to_x, to_y, piece.color):
+        if board.square_attacked(from_x, from_y) or board.square_attacked(to_x, to_y):
             return False
 
         return True
